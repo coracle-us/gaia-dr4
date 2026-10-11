@@ -96,3 +96,82 @@ def sample_orbit(ep, ml, model="6p", n_walkers=32, n_steps=3000, burn=1000, seed
     period, e, tp = chain[:, 0], chain[:, 1], -m0 * chain[:, 0] / (2 * np.pi)
     return OrbitPosterior(period, e, tp, chain[:, 3], chain[:, 4], lin, a0, inc, om, big_om,
                           float(np.mean(sampler.acceptance_fraction)))
+
+
+def thiele_innes_jacobian(a, inc, omega, big_omega, h=1e-6) -> float:
+    """|d(A, B, F, G) / d(a, i, omega, Omega)| (numerical); equals a^3 sin^3 i."""
+    from companions.orbit import thiele_innes
+    x0 = np.array([a, inc, omega, big_omega], float)
+    jac = np.zeros((4, 4))
+    for k in range(4):
+        dx = np.zeros(4)
+        dx[k] = h
+        jac[:, k] = (np.array(thiele_innes(*(x0 + dx))) - np.array(thiele_innes(*(x0 - dx)))) / (2 * h)
+    return float(abs(np.linalg.det(jac)))
+
+
+def campbell_log_prob(x, ep, model, p_lo, p_hi, e_max, ln_a_lo, ln_a_hi) -> float:
+    """theta = (P, e, M0, ln a0, cos i, omega, Omega, s_ccd, s_tr). Priors: P uniform (local),
+    e uniform, M0 / omega / Omega uniform (periodic), ln a0 uniform, cos i uniform (isotropic),
+    jitters flat >= 0. The single-star parameters are marginalised analytically (flat priors)."""
+    from companions.linear import single_star_design, single_star_prior
+    from companions.noise import gls
+    from companions.orbit import orbit_design, thiele_innes
+    period, e, m0, ln_a, cos_i, om, big_om, s_ccd, s_tr = x
+    if not (p_lo < period < p_hi and 0 <= e < e_max and ln_a_lo < ln_a < ln_a_hi
+            and -1 <= cos_i <= 1 and s_ccd >= 0 and s_tr >= 0 and np.all(np.isfinite(x))):
+        return -np.inf
+    m0 = np.mod(m0 + np.pi, 2 * np.pi) - np.pi
+    ti = np.array(thiele_innes(np.exp(ln_a), np.arccos(cos_i), om, big_om))
+    try:
+        y = ep.w - orbit_design(ep, period, e, -m0 * period / (2 * np.pi)) @ ti
+        fit = gls(single_star_design(ep, model), y, ep.sigma**2 + s_ccd**2, ep.transit, s_tr**2,
+                  single_star_prior(model))
+        lp = fit.lnlike + 0.5 * np.linalg.slogdet(fit.cov)[1]
+    except np.linalg.LinAlgError:
+        return -np.inf
+    return float(lp) if np.isfinite(lp) else -np.inf
+
+
+def sample_orbit_campbell(ep, ml, model="6p", n_walkers=40, n_steps=3000, burn=1200, seed=0,
+                          p_width=0.3, e_max=0.95) -> OrbitPosterior:
+    """Posterior in Campbell elements with isotropic orientation and log-uniform a0 priors.
+    Use this for masses and inclinations: flat Thiele-Innes priors (sample_orbit) imply
+    p(a0, i) ~ a0^3 sin^3 i, biasing low-S/N masses high and inclinations towards edge-on."""
+    from companions.linear import single_star_design, single_star_prior
+    from companions.noise import gls
+    from companions.orbit import orbit_design, thiele_innes
+    a0, inc, om, big_om = campbell_from_thiele_innes(*ml.fit.params[-4:])
+    p_lo, p_hi = ml.period * (1 - p_width), ml.period * (1 + p_width)
+    ln_a_lo, ln_a_hi = np.log(a0) - 5, np.log(a0) + 3
+    x0 = np.array([ml.period, min(ml.e, e_max - 1e-3), -2 * np.pi * ml.tp / ml.period, np.log(a0),
+                   np.cos(inc), om, big_om, ml.s_ccd, ml.s_tr])
+    scale = np.array([1e-3 * ml.period, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 1e-3, 1e-3])
+    rng = np.random.default_rng(seed)
+    p0 = x0 + scale * rng.standard_normal((n_walkers, len(x0)))
+    p0[:, 1] = np.clip(np.abs(p0[:, 1]), 0, e_max - 1e-3)
+    p0[:, 4] = np.clip(p0[:, 4], -1, 1)
+    p0[:, 7:] = np.abs(p0[:, 7:])
+    sampler = emcee.EnsembleSampler(n_walkers, len(x0), campbell_log_prob,
+                                    args=(ep, model, p_lo, p_hi, e_max, ln_a_lo, ln_a_hi))
+    sampler.random_state = np.random.RandomState(seed).get_state()
+    sampler.run_mcmc(p0, n_steps, progress=False)
+    chain = sampler.get_chain(discard=burn, flat=True)
+
+    period, e = chain[:, 0], chain[:, 1]
+    m0 = np.mod(chain[:, 2] + np.pi, 2 * np.pi) - np.pi
+    tp = -m0 * period / (2 * np.pi)
+    a0s, incs = np.exp(chain[:, 3]), np.arccos(chain[:, 4])
+    om_s, big_om_s = chain[:, 5], chain[:, 6]
+    shift = np.floor(big_om_s / np.pi)                     # fold (omega, Omega) ~ (omega+pi, Omega+pi)
+    big_om_s = big_om_s - shift * np.pi
+    om_s = np.mod(om_s - shift * np.pi, 2 * np.pi)
+    lin = []
+    for k in range(len(chain)):
+        ti = np.array(thiele_innes(a0s[k], incs[k], om_s[k], big_om_s[k]))
+        y = ep.w - orbit_design(ep, period[k], e[k], tp[k]) @ ti
+        fit = gls(single_star_design(ep, model), y, ep.sigma**2 + chain[k, 7] ** 2, ep.transit,
+                  chain[k, 8] ** 2, single_star_prior(model))
+        lin.append(np.concatenate([rng.multivariate_normal(fit.params, fit.cov), ti]))
+    return OrbitPosterior(period, e, tp, chain[:, 7], chain[:, 8], np.array(lin), a0s, incs,
+                          om_s, big_om_s, float(np.mean(sampler.acceptance_fraction)))

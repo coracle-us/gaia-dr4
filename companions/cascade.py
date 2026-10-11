@@ -12,7 +12,9 @@ Classification (thresholds from the null calibration, results/thresholds.csv, FA
 Orbit characterisation: ML Thiele-Innes -> a0, i; companion mass for a dark companion; minimum
 mutual inclination with the transiting planet, min(|i - i_b|, |i - (180 - i_b)|) (the transit
 does not fix the sense of i_b, and astrometry gives no relative node).
-Optional: posterior sampling (companions.posterior) and joint fit with literature RVs.
+Optional: posterior sampling in Campbell elements with isotropic-orientation / log-uniform-a0 priors
+(companions.posterior.sample_orbit_campbell; flat Thiele-Innes priors would bias masses high and
+inclinations to edge-on) and joint fit with literature RVs.
 Vetting flags (notes/phase1_validation.md):
   high_e_check (e > 0.8; null false positives are e > 0.9 fits),
   stability_confirmed / stability_not_confirmed (orbit re-found, P within 10% and dlnl2 > 0.5 of
@@ -163,8 +165,8 @@ def run_cascade(ep, host: HostInfo, thr: Thresholds, model="6p", rv=None,
             res.stable = stability_check(ep, orb.period, orb.dlnl2, model)
             res.flags.append("stability_confirmed" if res.stable else "stability_not_confirmed")
         if do_posterior:
-            from companions.posterior import sample_orbit
-            post = sample_orbit(ep, orb, model=model, **(posterior_kw or {}))
+            from companions.posterior import sample_orbit_campbell
+            post = sample_orbit_campbell(ep, orb, model=model, **(posterior_kw or {}))
             mass = companion_mass_mj(post.a0, post.linear[:, 2], post.period, host.mstar)
             dinc = np.array([min_mutual_inclination_deg(x, host.inner_inc_deg)
                              for x in np.rad2deg(post.inc)])

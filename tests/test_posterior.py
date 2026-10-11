@@ -64,3 +64,34 @@ def test_log_prob_wraps_mean_anomaly_and_survives_degeneracy(prerelease_table):
     val = orbit_log_prob(np.array([1.5, 0.3, 7e16, 0.05, 0.01]), ep, "6p", 1.0, 2.0, 0.95)
     assert isinstance(val, float)
     assert orbit_log_prob(np.array([5.0, 0.3, 0.7, 0.05, 0.01]), ep, "6p", 1.0, 2.0, 0.95) == -np.inf
+
+
+def test_thiele_innes_jacobian_is_a_cubed_sin_cubed_i():
+    """Flat priors on (A, B, F, G) correspond to p(a, i) ~ a^3 sin^3 i in Campbell elements,
+    which favours large, edge-on orbits; hence the Campbell-element sampler."""
+    from companions.posterior import thiele_innes_jacobian
+    rng = np.random.default_rng(0)
+    for _ in range(5):
+        a, inc, om, big_om = rng.uniform(0.1, 2), rng.uniform(0.1, 3.0), rng.uniform(0, 6), rng.uniform(0, 3)
+        assert thiele_innes_jacobian(a, inc, om, big_om) == pytest.approx(a**3 * np.sin(inc) ** 3, rel=1e-5)
+
+
+@pytest.mark.slow
+def test_campbell_sampler_covers_injected_orbit(prerelease_table):
+    from companions.posterior import sample_orbit_campbell
+    ep = EpochData.from_table(prerelease_table, GAIA4)
+    rng = np.random.default_rng(42)
+    truth = dict(period=1.8, e=0.25, tp=0.4, a=0.22, inc=np.deg2rad(55))
+    ti = np.array(thiele_innes(truth["a"], truth["inc"], 2.0, 0.8))
+    ep.sigma = np.full_like(ep.w, 0.08)
+    ep.w = (single_star_design(ep, "5p") @ np.array([0.1, -0.2, 13.6, -75.5, 17.9])
+            + orbit_design(ep, truth["period"], truth["e"], truth["tp"]) @ ti
+            + 0.08 * rng.standard_normal(len(ep.w)))
+    ml = search_orbit_ml(ep, model="5p")
+    post = sample_orbit_campbell(ep, ml, model="5p", n_walkers=40, n_steps=2500, burn=1000, seed=3)
+    for name, true in [("period", truth["period"]), ("a0", truth["a"]), ("inc", truth["inc"])]:
+        x = getattr(post, name)
+        z = abs(np.median(x) - true) / np.std(x)
+        assert z < 3, f"{name}: median {np.median(x):.4f} sd {np.std(x):.4f} truth {true:.4f}"
+    assert np.all((post.big_omega >= 0) & (post.big_omega < np.pi))
+    assert post.linear.shape[1] == 9

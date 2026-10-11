@@ -11,9 +11,9 @@
   "fap_per_star": 0.0001,
   "procs": 30,
   "posterior": {
-    "n_walkers": 32,
-    "n_steps": 2000,
-    "burn": 700
+    "n_walkers": 40,
+    "n_steps": 3000,
+    "burn": 1200
   },
   "thresholds_file": "results/thresholds.csv",
   "control": {

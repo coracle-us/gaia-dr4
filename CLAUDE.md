@@ -182,8 +182,12 @@ file. Use them to rank targets by expected S/N.
   (`results/target_sensitivity.csv`). Impostors: twins (q ≈ 0.99) mimic planets and hide in
   RV amplitude, but split lines by 20–30 km/s; 253/267 sensitive hosts have literature RVs
   (twin excluded), 14 need DR4 SB2/vbroad vetting (`results/impostor_vetting.csv`).
-  Next: model-selection cascade with vetting rules, release-day dry run; recalibrate noise
-  on real DR4 single stars.
+  Cascade + release-day pipeline built and dry-run on all 781 hosts (0 errors, 0 false
+  positives, 21/25 injections recovered with correct periods); runbook `docs/RELEASE_DAY.md`.
+  Posteriors now in Campbell elements (flat Thiele–Innes priors bias masses high and i edge-on).
+  Population tools ready (occurrence, mutual-inclination width). Remaining before 25 Nov: finish
+  DR3 control-star preparation (`data/control_stars.csv`), rerun Gaia-4 validation with the
+  Campbell sampler, tag `pre-dr4`.
 - Sensitivity (edge-on, Lammers & Winn Δχ² > 50, P ≤ 4 yr): 73 hosts reach ≤ 5 M_J,
   370 reach ≤ 13 M_J. Most known outer companions have P > 4 yr, so Phase 1 needs
   acceleration models and a joint astrometry + RV mode (see `notes/literature.md` §0).

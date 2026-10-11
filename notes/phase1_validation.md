@@ -303,3 +303,84 @@ Gaia epoch RVs must therefore be modelled with the known inner planet; `companio
 1. Detection around a host with literature RVs: twin excluded. Check that the companion's predicted K is consistent with the RVs (joint fit).
 2. Detection around a host without literature RVs: require no DR4 SB2 flag, no excess epoch-`vbroad` variability, and dM_G not ≈ −0.75 (beyond what evolution explains). Otherwise the target is flagged "impostor not excluded" and only reported with that caveat.
 3. RUWE > 1.4, a DR3 NSS solution, or an HGCA signal not explained by the candidate: check for a stellar companion first.
+
+## 2026-10-11 (later): cascade, release-day pipeline, full dry run, posterior priors
+
+### Cascade (`companions/cascade.py`)
+
+**Steps:** single star → 7p / 9p accelerations → orbit search.
+
+**Orbit vs acceleration rule**, calibrated on `results/injection_recovery.csv`:
+- When both fire, call it an orbit if dlnl2_orbit − max(dlnl2_acc) > 10 and P_fit < 3.8 yr; otherwise call it an acceleration.
+- 93% correct when both fire.
+- 1% of P > 4 yr companions are called orbits.
+- The short periods misclassified all have P = 3.5–4 yr.
+
+**Pre-release real data:**
+
+| Source | Classification |
+|---|---|
+| 9 single stars / QSOs | none |
+| Gaia-4 | orbit, 11.0 M_J, stability confirmed |
+| HD 114762 | orbit, P = 84 d, stellar mass |
+| Gaia BH3 | acceleration |
+
+**Flags**
+- impostor: `twin_excluded_lit_rv` / `impostor_not_excluded`
+- `stellar_companion_check`
+- mass class: `brown_dwarf_mass` / `stellar_mass`
+- `high_e_check`
+- `marginal`
+- `stability_confirmed` / `stability_not_confirmed`
+
+**Stability check** (`scripts/calibrate_stability.py` → `results/stability_calibration.csv`):
+- Passed by 3% of the strongest noise solutions.
+- Passed by 44–69% of genuine detections with dlnl2 = 40–120.
+- So a pass is strong support, and a non-pass is only weak evidence against.
+
+### Release-day pipeline (`scripts/release_day.py`, `config/release_day.json`, `docs/RELEASE_DAY.md`)
+
+**Sources**
+- DataLink: raw zips kept in `data/raw/dr4/`, batched, with retries and resume.
+- Zip cache.
+- Simulated DR4 data in the DR4 RAW VOTable layout. `companions/dr4io.py` round-trips the real pre-release epochs exactly.
+
+**Live check:** the live DataLink path was verified with DR3 epoch photometry (RAW and INDIVIDUAL). Lesson: the astroquery docs example ids have no epoch photometry.
+
+**Other steps**
+- **Vetting:** DPAC NSS cross-match (TAP) and Gaia epoch-RV constancy after removing the transiting planet (`companions/vetting.py`, `companions/gaia_rv.py`).
+- **Real-data null** (`scripts/calibrate_null_real.py`): matched control stars near the hosts, chosen from DR3 before release (`--prepare-dr3`) and re-checked against DR4 on the day.
+- **Note tables** (`scripts/make_table.py`): an AASTeX detections table and an AAS machine-readable table of all hosts.
+- **Population** (`companions/population.py`, `scripts/population_analysis.py`):
+  - per-host completeness for a 1–13 M_J, 1–4 yr population;
+  - occurrence rate (binomial, completeness-weighted) for all, hot and warm hosts;
+  - Rayleigh width of the mutual inclination, with the node and the transit i ambiguity marginalised. Recovery is tested at σ = 5° and 20°.
+
+### Full dry run
+
+781 simulated hosts with 25 injected aligned companions at 1.5 × m90(P = 3 yr), FAP 1e-4 thresholds. Result files are `results/dryrun/` (not committed; regenerate with the command in the runbook).
+
+| Measure | Result |
+|---|---|
+| Runtime | 5.7 min (fetch 30 s, fit 5.2 min on 30 cores) |
+| Errors | 0 |
+| False positives among 756 null hosts | 0 |
+| Injections recovered as orbits | 21 of 25 |
+| Recovered with the correct period (within 10%) | all 21 |
+| Missed | 4; injected at P < 3 yr, where m90(P = 3 yr) overstates sensitivity |
+
+The first run surfaced two sampler crashes, from the mean anomaly drifting by about 10¹⁶ cycles. Fixed: M0 is wrapped, and numerical failures count as zero probability.
+
+### Posterior priors
+
+- **The problem:** flat priors on (A, B, F, G) are equivalent to p(a0, i) ∝ a0³ sin³ i in Campbell elements (Jacobian, tested). That biases low-S/N masses high and inclinations towards edge-on, which is exactly the "aligned" signature we want to measure.
+- **The fix:** `sample_orbit_campbell` samples (P, e, M0, ln a0, cos i, ω, Ω, jitters) with isotropic-orientation and log-uniform-a0 priors, and marginalises the star parameters analytically.
+- **Result on the 21 recovered injections** (`scripts/validate_posterior_bias.py` → `results/posterior_bias.csv`):
+
+  | Sampler | Mass ratio (median) | Mass truth in 68% interval | Inclination truth in 68% interval |
+  |---|---|---|---|
+  | Flat Thiele–Innes | 1.17 | 57% | 67% |
+  | Campbell | 1.03 | 71% | 67% |
+
+- The cascade now uses the Campbell sampler.
+- The Gaia-4 validation in `results/gaia4_validation.csv` used the flat Thiele–Innes sampler: rerun it with the Campbell sampler before quoting it.

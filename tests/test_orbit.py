@@ -48,3 +48,15 @@ def test_fit_at_true_period_recovers_injected_orbit_exactly(prerelease_table):
     np.testing.assert_allclose(fit.params[:5], star_true, atol=1e-9)
     np.testing.assert_allclose(fit.params[5:], ti_true, atol=1e-9)
     assert fit.chi2 == pytest.approx(0.0, abs=1e-12)
+
+
+def test_campbell_convention_matches_gaia_dr3_nsstools_for_gaia4():
+    """DR3 nss_two_body_orbit Thiele-Innes for Gaia-4 (source_id 1457486023639239296) ->
+    Campbell elements as quoted for the DR3 solution by Stefansson+2025 (Table 2, via nsstools):
+    i = 115.4 +- 4.6 deg, omega = 185 +- 16 deg, Omega = 159.4 +- 5 deg; a0 = 0.312 mas (abstract)."""
+    A, B, F, G = 0.2863899608855841, -0.12249067844532667, -0.07725115765112353, -0.11373315816651848
+    a, inc, om, big_om = campbell_from_thiele_innes(A, B, F, G)
+    assert a == pytest.approx(0.312, abs=0.002)
+    assert np.rad2deg(inc) == pytest.approx(115.4, abs=0.1)
+    assert np.rad2deg(om) == pytest.approx(185, abs=1)
+    assert np.rad2deg(big_om) == pytest.approx(159.4, abs=0.1)

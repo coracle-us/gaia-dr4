@@ -38,19 +38,19 @@ def thiele_innes(a, inc, omega, big_omega):
 
 
 def campbell_from_thiele_innes(A, B, F, G):
-    """Inverse of thiele_innes: (a, inc, omega, big_omega), big_omega in [0, pi)."""
+    """Inverse of thiele_innes: (a, inc, omega, big_omega), big_omega in [0, pi). Vectorised."""
+    A, B, F, G = (np.asarray(v, dtype=float) for v in (A, B, F, G))
     k = (A**2 + B**2 + F**2 + G**2) / 2
     m = A * G - B * F
-    a = np.sqrt(k + np.sqrt(max(k**2 - m**2, 0.0)))
+    a = np.sqrt(k + np.sqrt(np.maximum(k**2 - m**2, 0.0)))
     inc = np.arccos(np.clip(m / a**2, -1, 1))
     w_plus_o = np.arctan2(B - F, A + G)
     w_minus_o = np.arctan2(-B - F, A - G)
     omega, big_omega = (w_plus_o + w_minus_o) / 2, (w_plus_o - w_minus_o) / 2
-    if big_omega < 0:
-        omega, big_omega = omega + np.pi, big_omega + np.pi
-    elif big_omega >= np.pi:
-        omega, big_omega = omega - np.pi, big_omega - np.pi
-    return a, inc, np.mod(omega, 2 * np.pi), big_omega
+    shift = np.where(big_omega < 0, np.pi, np.where(big_omega >= np.pi, -np.pi, 0.0))
+    omega, big_omega = omega + shift, big_omega + shift
+    out = a, inc, np.mod(omega, 2 * np.pi), big_omega
+    return tuple(float(v) for v in out) if np.ndim(a) == 0 else out
 
 
 def orbit_design(ep, period: float, e: float, tp: float) -> np.ndarray:

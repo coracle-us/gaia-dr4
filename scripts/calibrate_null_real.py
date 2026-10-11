@@ -11,6 +11,11 @@ Real "single" stars contain some genuine companions, so the real-data tail and i
 are conservative (an upper bound on the false-alarm threshold).
 ADQL templates and table names come from config/release_day.json ("control" section): verify
 them against the DR4 archive on release day.
+
+Cone searches are slow under archive load, so controls are chosen BEFORE release from DR3
+(DR4 source ids are expected to equal DR3 ids for these bright stars):
+    python scripts/calibrate_null_real.py --prepare-dr3 200     # now -> data/control_stars.csv
+On release day the prepared list is re-checked against DR4 (RUWE, NSS tables) by id only.
 """
 from __future__ import annotations
 
@@ -48,21 +53,37 @@ def select_controls(cand: pd.DataFrame, hosts: pd.DataFrame, k=5, max_dg=0.5, ma
     return pd.concat(rows, ignore_index=True) if rows else cand.iloc[:0]
 
 
-def query_candidates(hosts: pd.DataFrame, ccfg: dict, cache_dir: Path) -> pd.DataFrame:
+def query_candidates(hosts: pd.DataFrame, ccfg: dict, cache_dir: Path, table: str,
+                     threads: int = 6) -> pd.DataFrame:
+    """Cone search per host (cached per host), `threads` concurrent archive jobs."""
+    from concurrent.futures import ThreadPoolExecutor
     from astroquery.gaia import Gaia
     cache_dir.mkdir(parents=True, exist_ok=True)
-    parts = []
-    for _, h in hosts.iterrows():
+
+    def one(h):
         path = cache_dir / f"{int(h.source_id)}.csv"
         if not path.exists():
-            q = ccfg["candidate_adql"].format(table=ccfg["gaia_source_table"], ra=h.ra, dec=h.dec,
+            q = ccfg["candidate_adql"].format(table=table, ra=h.ra, dec=h.dec,
                                               radius=ccfg["max_sep_deg"],
                                               gmin=h.phot_g_mean_mag - ccfg["max_dg"],
                                               gmax=h.phot_g_mean_mag + ccfg["max_dg"],
                                               max_ruwe=ccfg["max_ruwe"])
-            Gaia.launch_job_async(q).get_results().to_pandas().to_csv(path, index=False)
-        parts.append(pd.read_csv(path))
-    cand = pd.concat(parts, ignore_index=True).drop_duplicates("source_id")
+            for attempt in range(4):
+                try:
+                    Gaia.launch_job_async(q).get_results().to_pandas().to_csv(path, index=False)
+                    break
+                except Exception:
+                    if attempt == 3:
+                        return None
+        return pd.read_csv(path)
+
+    with ThreadPoolExecutor(threads) as ex:
+        parts = [p for p in ex.map(one, [h for _, h in hosts.iterrows()]) if p is not None]
+    return pd.concat(parts, ignore_index=True).drop_duplicates("source_id")
+
+
+def drop_non_single(cand: pd.DataFrame, ccfg: dict) -> pd.DataFrame:
+    from astroquery.gaia import Gaia
     for table in ccfg.get("nss_tables", []):                         # drop known non-single stars
         ids = cand.source_id.tolist()
         nss = []
@@ -71,7 +92,33 @@ def query_candidates(hosts: pd.DataFrame, ccfg: dict, cache_dir: Path) -> pd.Dat
             nss.append(Gaia.launch_job(f"select source_id from {table} where source_id in ({id_list})")
                        .get_results().to_pandas())
         cand = cand[~cand.source_id.isin(pd.concat(nss).source_id)]
-    return cand
+    ids = cand.source_id.tolist()                                     # re-check RUWE in DR4
+    ruwe = []
+    for i in range(0, len(ids), 500):
+        id_list = ",".join(str(int(s)) for s in ids[i:i + 500])
+        ruwe.append(Gaia.launch_job(f"select source_id, ruwe as ruwe_dr4 from "
+                                    f"{ccfg['gaia_source_table']} where source_id in ({id_list})")
+                    .get_results().to_pandas())
+    cand = cand.merge(pd.concat(ruwe), on="source_id", how="inner")
+    return cand[cand.ruwe_dr4 < ccfg["max_ruwe"]]
+
+
+def prepare_dr3(n_hosts: int, ccfg: dict, k: int, seed: int = 0) -> pd.DataFrame:
+    import release_day
+    hosts = release_day.build_hosts()[["source_id", "ra", "dec", "phot_g_mean_mag"]]
+    hosts = hosts.assign(source_id=hosts.source_id.astype("int64"))
+    # stratified in G: equal numbers per G quintile
+    hosts["gbin"] = pd.qcut(hosts.phot_g_mean_mag, 5, labels=False)
+    per = int(np.ceil(n_hosts / 5))
+    pick = hosts.groupby("gbin", group_keys=False).apply(
+        lambda d: d.sample(min(per, len(d)), random_state=seed)).drop(columns="gbin")
+    cand = query_candidates(pick, ccfg, ROOT / "data/raw/control_candidates_dr3",
+                            table="gaiadr3.gaia_source")
+    ctl = select_controls(cand, pick, k=k, max_dg=ccfg["max_dg"], max_sep_deg=ccfg["max_sep_deg"],
+                          max_ruwe=ccfg["max_ruwe"], seed=seed)
+    ctl.to_csv(ROOT / "data/control_stars.csv", index=False)
+    print(f"{len(ctl)} control stars for {ctl.host_source_id.nunique()} hosts -> data/control_stars.csv")
+    return ctl
 
 
 def _stats(args):
@@ -92,6 +139,8 @@ def main(argv=None) -> None:
     ap.add_argument("--config", type=Path, default=ROOT / "config/release_day.json")
     ap.add_argument("--k", type=int, default=5)
     ap.add_argument("--procs", type=int, default=30)
+    ap.add_argument("--prepare-dr3", type=int, default=0, metavar="N_HOSTS",
+                    help="before release: choose controls for N hosts from DR3 and stop")
     args = ap.parse_args(argv)
     cfg = json.loads(args.config.read_text())
     ccfg = cfg["control"]
@@ -99,10 +148,18 @@ def main(argv=None) -> None:
     from analyze_calibration import STATS, FAPS, threshold
     from companions.archive import DataLinkSource
 
-    hosts = release_day.build_hosts()[["source_id", "ra", "dec", "phot_g_mean_mag"]]
-    cand = query_candidates(hosts, ccfg, ROOT / "data/raw/dr4/control_candidates")
-    ctl = select_controls(cand, hosts, k=args.k, max_dg=ccfg["max_dg"],
-                          max_sep_deg=ccfg["max_sep_deg"], max_ruwe=ccfg["max_ruwe"])
+    if args.prepare_dr3:
+        prepare_dr3(args.prepare_dr3, ccfg, args.k)
+        return
+    prepared = ROOT / "data/control_stars.csv"
+    if prepared.exists():
+        ctl = drop_non_single(pd.read_csv(prepared), ccfg)
+    else:
+        hosts = release_day.build_hosts()[["source_id", "ra", "dec", "phot_g_mean_mag"]]
+        cand = query_candidates(hosts, ccfg, ROOT / "data/raw/dr4/control_candidates",
+                                table=ccfg["gaia_source_table"])
+        ctl = select_controls(drop_non_single(cand, ccfg), hosts, k=args.k, max_dg=ccfg["max_dg"],
+                              max_sep_deg=ccfg["max_sep_deg"], max_ruwe=ccfg["max_ruwe"])
     src = DataLinkSource(cfg["data_release"], ROOT / "data/raw/dr4/control_epoch_astrometry",
                          retrieval_type=cfg["retrieval_type"], data_structure=cfg["data_structure"],
                          batch_size=cfg["batch_size"], retries=cfg["retries"], backoff_s=cfg["backoff_s"])

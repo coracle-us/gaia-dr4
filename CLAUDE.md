@@ -186,8 +186,8 @@ file. Use them to rank targets by expected S/N.
   positives, 21/25 injections recovered with correct periods); runbook `docs/RELEASE_DAY.md`.
   Posteriors now in Campbell elements (flat Thiele–Innes priors bias masses high and i edge-on).
   Population tools ready (occurrence, mutual-inclination width). Remaining before 25 Nov: finish
-  DR3 control-star preparation (`data/control_stars.csv`), rerun Gaia-4 validation with the
-  Campbell sampler, tag `pre-dr4`.
+  DR3 control-star preparation (`data/control_stars.csv`),
+  tag `pre-dr4`.
 - Sensitivity (edge-on, Lammers & Winn Δχ² > 50, P ≤ 4 yr): 73 hosts reach ≤ 5 M_J,
   370 reach ≤ 13 M_J. Most known outer companions have P > 4 yr, so Phase 1 needs
   acceleration models and a joint astrometry + RV mode (see `notes/literature.md` §0).

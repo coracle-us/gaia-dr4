@@ -383,4 +383,4 @@ The first run surfaced two sampler crashes, from the mean anomaly drifting by ab
   | Campbell | 1.03 | 71% | 67% |
 
 - The cascade now uses the Campbell sampler.
-- The Gaia-4 validation in `results/gaia4_validation.csv` used the flat Thiele–Innes sampler: rerun it with the Campbell sampler before quoting it.
+- Gaia-4 validation rerun with the Campbell sampler: essentially unchanged at high S/N (M = 10.9 ± 0.5 M_J, i = 121.0 ± 2.7°; `results/gaia4_validation.csv`).

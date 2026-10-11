@@ -17,7 +17,7 @@ from scipy.optimize import minimize
 
 from companions.epoch import EpochData
 from companions.orbit import orbit_gls
-from companions.posterior import companion_mass_mj, sample_orbit
+from companions.posterior import companion_mass_mj, sample_orbit_campbell
 from companions.search import search_orbit_ml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -60,7 +60,7 @@ def period_profile(ep, periods_d, model="5p"):
 def main(seed: int = 2) -> None:
     ep = EpochData.from_table(parse_single_table(XML).to_table(), GAIA4)
     ml = search_orbit_ml(ep, model="6p")
-    post = sample_orbit(ep, ml, model="6p", n_walkers=32, n_steps=3000, burn=1000, seed=seed)
+    post = sample_orbit_campbell(ep, ml, model="6p", n_walkers=40, n_steps=3000, burn=1200, seed=seed)
     draws = {
         "period_d": post.period * 365.25, "e": post.e, "inc_deg": np.rad2deg(post.inc),
         "Omega_deg": np.rad2deg(post.big_omega), "omega_deg": np.rad2deg(post.omega),

@@ -144,3 +144,85 @@ The RV model and its convention are verified.
   - a second companion or a trend.
 
 **Release-day action.** Re-fit Gaia-4 with the final DR4 data. If astrometry–RV tension of this size recurs on known systems, it will limit our joint-fit claims (masses and mutual inclinations).
+
+## 2026-10-11 (later): DR4 sampling, null calibration, injection–recovery
+
+### Sampling (`companions/scanlaw.py`, `companions/simulate.py`)
+
+**Transit prediction**
+- Source: ESA GOST predictions on a HEALPix nside-64 grid. Only the data tables from the gaiascanlaw 0.2.0 wheel are used; its code needs healpy, which doesn't build on Windows. Raw files are in `data/raw/gaiascanlaw/`.
+- **Time convention:** the tables' times are Julian years. astropy's calendar `decimalyear` is off by hours.
+- **Validation against the 9 pre-release stars:**
+
+  | Check | Result |
+  |---|---|
+  | Transits matched one-to-one | 37–91% |
+  | Timing | ~10–40 s |
+  | Scan angle | < 1° |
+  | Predicted / real transit count | 0.9–1.4 |
+
+- The grid pixel (0.9°) is comparable to the across-scan FoV width (0.7°), so the predictions are statistically representative but not exact. Release day: use the DR4 `commanded_scan_law` table.
+
+**Parallax factors**
+- Computed for Gaia at L2. They match the real `parallax_factor_al` to better than 0.02.
+
+**Simulator settings**
+- 9 AF CCDs per transit; 10% of transits rejected.
+- Holl+2023 per-CCD σ (`companions/precision.py`, shared with `scripts/build_targets.py`).
+- Optional s_ccd and s_tr jitter, and an injected orbit.
+
+### Null calibration
+
+Sources: `scripts/calibrate_null.py` → `results/calibration_null.csv` (10,000 realisations), `scripts/analyze_calibration.py` → `results/thresholds.csv`.
+
+**Setup:** single stars at real target positions and G magnitudes, with excess noise s_ccd, s_tr ~ U(0, 0.05) mas, run through the full pipeline statistics.
+
+| Statistic | Median | 99.9% | Threshold at FAP 1e-3 | Threshold at FAP 1e-4 | Max of 10⁴ |
+|---|---|---|---|---|---|
+| Orbit dlnl2 | 14.8 | 35.1 | 35.1 | 42.6 (exponential tail) | 50.7 |
+| 7p acceleration | 1.5 | 16.4 | 16.4 | 21.7 | — |
+| 9p acceleration | 3.6 | 20.8 | 20.8 | 27.1 | — |
+
+- The orbit threshold is stable across magnitude: 39–45 for G < 11, 11–13 and > 13.
+- Lammers & Winn's Δχ² > 50 is slightly more conservative than our FAP-1e-4 threshold.
+- **False-positive mode:** the extreme nulls are e > 0.9 fits to a few noisy transits, often where the single-star ML fit set s_tr to 0. Vetting rule: any detection with e > 0.8 needs a leave-transits-out (jackknife) check.
+
+### Injection–recovery
+
+Source: `scripts/injection_recovery.py` → `results/injection_recovery.csv` (6,000 injections).
+
+**Setup**
+- P log-uniform over 0.2–8 yr, e ~ U(0, 0.6).
+- Half isotropic, half aligned (i = 90 ± 3°).
+- Amplitude set by the expected full-orbit Δχ², log-uniform over 3–3000.
+
+**Detection at FAP 1e-4 per star** (`results/completeness.csv`, `figures/completeness.png`)
+- **P ≤ 4 yr, aligned:** logistic fits give 50% completeness at an expected Δχ² of 74–84, and 90% at 126–166. Isotropic orbits give the same curve once the geometry factor is included. The period is right (within 10%) for over 90% of detections at P < 3 yr.
+- **P = 4–5.5 yr:** orbit detections still work, but the period is right in only 55–90% of them. The acceleration models recover these well.
+- **P > 5.5 yr:** strong signals trigger the orbit statistic with a wrong period (about 0% correct). Use the acceleration models, which reach 60–96% at high signal.
+
+### Calibrated per-host sensitivity
+
+Source: `scripts/target_sensitivity.py` → `results/target_sensitivity.csv`.
+
+Aligned (edge-on) companions, detected at FAP 1e-4 per star. Entries are the number of hosts whose detectable mass at that completeness is at most the stated limit:
+
+| P | 50% complete ≤ 1 M_J | ≤ 2 M_J | ≤ 5 M_J | ≤ 13 M_J | 90% complete ≤ 5 M_J | 90% complete ≤ 13 M_J |
+|---|---|---|---|---|---|---|
+| 1 yr | 0 | 1 | 6 | 68 | 1 | 23 |
+| 2 yr | 0 | 1 | 17 | 189 | 12 | 119 |
+| 3 yr | 1 | 2 | 39 | 266 | 17 | 178 |
+| 4 yr | 1 | 5 | 56 | 326 | 19 | 200 |
+
+- Calibrated 50% masses are a median 1.13× the analytic estimate in `targets.csv` (`mmin_mj_edge_P4yr`).
+- **Best host:** HD 189733, with m50 = 0.82 M_J at P = 3 yr.
+- **The 39 hosts with m50 ≤ 5 M_J at P = 3 yr:**
+  - all have epoch RVs;
+  - 32 are hot-Jupiter hosts;
+  - 3 have RUWE > 1.4.
+
+### Caveats
+
+- **Noise prior:** the excess-noise prior (U(0, 0.05) mas) is a guess informed by 12 pre-release stars. On release day, recalibrate the null on real DR4 residuals of single stars, e.g. RUWE < 1.1 stars near our targets.
+- **Sampling:** this is GOST-grid sampling, not exact. Repeat the calibration with the DR4 `commanded_scan_law` and `gaia_gap` tables.
+- **Simulation model:** 5p only (no colour term) and dark companions only. Luminous binaries (impostors) are not simulated yet; the GaiaForecasts impostor mocks are the next step.

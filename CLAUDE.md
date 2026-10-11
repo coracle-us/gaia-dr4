@@ -176,8 +176,11 @@ file. Use them to rank targets by expected S/N.
   model (per-CCD + per-transit jitter, statistic dlnl2); posterior sampling; Gaia-4b recovered
   from the DR4 pre-release and cross-checked with exogaia; 7p/9p acceleration models; joint
   astrometry + RV fit (validated on Gaia-4b RVs; DR4-pre-release vs RV tension ~3σ, see log).
-  Next: injection–recovery / null calibration on realistic DR4 sampling (edge-on orbits,
-  FAP ≪ 1/790), then model-selection cascade and release-day dry run.
+  Null calibration (10⁴ sims): orbit dlnl2 > 42.6 ⇔ FAP 1e-4/star. Injection–recovery (6000):
+  50% completeness at expected full-orbit Δχ² ≈ 80 (P ≤ 4 yr); P > 5.5 yr → acceleration.
+  Calibrated sensitivity (aligned, 50%): 39 hosts ≤ 5 M_J at P = 3 yr, 56 at P = 4 yr
+  (`results/target_sensitivity.csv`). Next: impostor (luminous binary) injections, model-
+  selection cascade, release-day dry run; recalibrate noise on real DR4 single stars.
 - Sensitivity (edge-on, Lammers & Winn Δχ² > 50, P ≤ 4 yr): 73 hosts reach ≤ 5 M_J,
   370 reach ≤ 13 M_J. Most known outer companions have P > 4 yr, so Phase 1 needs
   acceleration models and a joint astrometry + RV mode (see `notes/literature.md` §0).

@@ -226,3 +226,80 @@ Aligned (edge-on) companions, detected at FAP 1e-4 per star. Entries are the num
 - **Noise prior:** the excess-noise prior (U(0, 0.05) mas) is a guess informed by 12 pre-release stars. On release day, recalibrate the null on real DR4 residuals of single stars, e.g. RUWE < 1.1 stars near our targets.
 - **Sampling:** this is GOST-grid sampling, not exact. Repeat the calibration with the DR4 `commanded_scan_law` and `gaia_gap` tables.
 - **Simulation model:** 5p only (no colour term) and dark companions only. Luminous binaries (impostors) are not simulated yet; the GaiaForecasts impostor mocks are the next step.
+
+## 2026-10-11 (later): impostor (luminous twin binary) analysis
+
+Code is `companions/impostor.py` (tested). Analysis is `scripts/impostor_analysis.py`, writing `results/impostor_mock_purity.csv` and `results/impostor_vetting.csv`.
+
+### Physics
+
+- A main-sequence companion has a photocentre factor B − β = q/(1+q) − f/(1+f), which is > 0 for q < 1 and goes to 0 as q → 1.
+- To mimic a detectable planet signal (m50 at P = 3 yr) around our hosts, a twin needs q ≈ 0.994 (range 0.960–0.9995). Such a twin is 0.73 mag overluminous.
+- **The RV amplitude hides it.** The flux-weighted RV moves by the same factor (median 134 m/s at P = 3 yr). Gaia's per-epoch RV scatter for our hosts is a median 1.3 km/s (DR3), so Gaia epoch RVs **cannot** exclude twins by amplitude.
+- **Line splitting reveals it.** The two stars' lines separate by up to K_rel: median 30, 26 and 23 km/s at P = 2, 3 and 4 yr.
+  - That is ≫ 6 km/s for high-resolution RV spectrographs.
+  - It is comparable to the RVS resolution element (~26 km/s), so DR4 SB2 flags and epoch `vbroad` variability are the Gaia-side tests.
+
+### Mock population (Lammers & Winn GaiaForecasts DR4 mocks)
+
+Hosts 0.7–1.5 M☉, G < 13.5, d < 300 pc, before any RV vetting:
+
+| Period (d) | Purity |
+|---|---|
+| 100–365 | 0.90 |
+| 365–730 | 0.96 |
+| 730–1100 | 0.98 |
+| 1100–1500 | 0.97 |
+
+All mock impostors are twins (median q = 0.991–0.993, minimum 0.973), consistent with the physics above.
+
+### Our hosts (267 with m50 ≤ 13 M_J at P = 3 yr)
+
+**Literature RV follow-up:** 253 of 267 have a published RV semi-amplitude for the transiting planet.
+- For those, a twin impostor is excluded: its 20–30 km/s line splitting would be resolved for more than half the orbit in R ~ 50,000 spectra.
+- Assumption to state in the note: the RV follow-up spectra exist and were inspected for double lines. This is standard for hot-Jupiter confirmation, but not verified per system.
+
+**14 hosts lack literature RVs**, so a twin is not yet excluded. Their status from what is available now:
+
+| Host | Notes |
+|---|---|
+| DS Tuc A | young; σ_RV,DR3 = 0.84 km/s |
+| K2-417 | |
+| K2-416 | |
+| K2-137 | dM_G = +0.74 |
+| K2-77 | |
+| TOI-1221 | |
+| K2-33 | dM_G = −0.96; 10 Myr pre-main-sequence |
+| TOI-216 | |
+| WASP-85 A | dM_G = +0.89 |
+| TOI-4641 | dM_G = −0.54; F star |
+| TOI-5143 | |
+| TOI-4600 | |
+| WASP-108 | dM_G = +1.12 |
+| K2-22 | |
+
+Vet these with the DR4 SB2 / `rvs_epoch_parameters_double` and epoch-`vbroad` variability, plus overluminosity.
+
+**DR3 RV-variable** (p < 0.01, renormalised goodness-of-fit > 4, N ≥ 10): 6 of 213 hosts with statistics.
+
+| Host | Explanation |
+|---|---|
+| WASP-18 | inner planet K ≈ 1.8 km/s; DR3 SB1 |
+| Kepler-16 | eclipsing binary |
+| TOI-2109 | rapid rotator |
+| XO-6 | rapid rotator |
+| TIC 46432937 | faint M dwarf with a massive hot Jupiter |
+| **HIP 94235** | **also HGCA χ² = 59: check for a stellar companion** |
+
+Gaia epoch RVs must therefore be modelled with the known inner planet; `companions.joint` profiles its K.
+
+**Overluminosity** (dM_G = M_G,obs − M_G,MS(Teff)):
+- 37 hosts are below −0.5 mag, i.e. twin-like or evolved.
+- 174 are within ±0.3 mag.
+- This test is ambiguous for evolved or young hosts.
+
+### Vetting rules added (for the cascade)
+
+1. Detection around a host with literature RVs: twin excluded. Check that the companion's predicted K is consistent with the RVs (joint fit).
+2. Detection around a host without literature RVs: require no DR4 SB2 flag, no excess epoch-`vbroad` variability, and dM_G not ≈ −0.75 (beyond what evolution explains). Otherwise the target is flagged "impostor not excluded" and only reported with that caveat.
+3. RUWE > 1.4, a DR3 NSS solution, or an HGCA signal not explained by the candidate: check for a stellar companion first.

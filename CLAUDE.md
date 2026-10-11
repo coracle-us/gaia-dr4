@@ -179,8 +179,11 @@ file. Use them to rank targets by expected S/N.
   Null calibration (10⁴ sims): orbit dlnl2 > 42.6 ⇔ FAP 1e-4/star. Injection–recovery (6000):
   50% completeness at expected full-orbit Δχ² ≈ 80 (P ≤ 4 yr); P > 5.5 yr → acceleration.
   Calibrated sensitivity (aligned, 50%): 39 hosts ≤ 5 M_J at P = 3 yr, 56 at P = 4 yr
-  (`results/target_sensitivity.csv`). Next: impostor (luminous binary) injections, model-
-  selection cascade, release-day dry run; recalibrate noise on real DR4 single stars.
+  (`results/target_sensitivity.csv`). Impostors: twins (q ≈ 0.99) mimic planets and hide in
+  RV amplitude, but split lines by 20–30 km/s; 253/267 sensitive hosts have literature RVs
+  (twin excluded), 14 need DR4 SB2/vbroad vetting (`results/impostor_vetting.csv`).
+  Next: model-selection cascade with vetting rules, release-day dry run; recalibrate noise
+  on real DR4 single stars.
 - Sensitivity (edge-on, Lammers & Winn Δχ² > 50, P ≤ 4 yr): 73 hosts reach ≤ 5 M_J,
   370 reach ≤ 13 M_J. Most known outer companions have P > 4 yr, so Phase 1 needs
   acceleration models and a joint astrometry + RV mode (see `notes/literature.md` §0).

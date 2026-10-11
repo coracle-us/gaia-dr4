@@ -68,7 +68,7 @@ def main() -> None:
               f"d90 = {np.exp(ln_d50 + np.log(9) / k):.0f}, slope k = {k:.2f}")
 
     sl = ScanLaw.load()
-    hosts = (pd.read_csv(ROOT / "data" / "targets.csv")
+    hosts = (pd.read_csv(ROOT / "data" / "targets.csv", dtype={"source_id": "Int64"})
              .dropna(subset=["ra", "dec", "phot_g_mean_mag", "dist_pc"])
              .drop_duplicates("hostname").reset_index(drop=True))
     rows = []

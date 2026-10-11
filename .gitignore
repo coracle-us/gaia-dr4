@@ -7,3 +7,5 @@ venv/
 *.fits
 *.vot
 data/cache/
+data/sim/
+results/dryrun/sim_epochs/

@@ -1,0 +1,14 @@
+{
+  "_comment": "Release-day settings. VERIFY data_release and table names against the DR4 archive on 2 Dec 2026.",
+  "data_release": "Gaia DR4",
+  "retrieval_type": "EPOCH_ASTROMETRY",
+  "data_structure": "RAW",
+  "batch_size": 100,
+  "retries": 6,
+  "backoff_s": 60,
+  "dr4_source_id": "same_as_dr3",
+  "model": "6p",
+  "fap_per_star": 1e-4,
+  "procs": 30,
+  "posterior": {"n_walkers": 32, "n_steps": 2000, "burn": 700}
+}

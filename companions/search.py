@@ -2,6 +2,8 @@
 profiled out, then nonlinear refinement of (P, e, T_p) from the best grid minima.
 
 Delta-chi2 is chi2(single star) - chi2(single star + orbit), same model and noise for both.
+search_orbit_ml instead fits per-CCD and per-transit jitter by maximum likelihood for each model
+and reports dlnl2 = 2 (lnL_orbit - lnL_star), which is robust to transit-correlated noise.
 Default period range 0.1-4 yr: Lammers & Winn (2025) find DR4 periods unreliable beyond ~4 yr.
 """
 from __future__ import annotations
@@ -9,10 +11,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
-from scipy.optimize import least_squares
+from scipy.optimize import least_squares, minimize
 
-from companions.linear import LinearFit, fit_single_star
-from companions.orbit import fit_orbit
+from companions.linear import COLOUR_PRIOR_SIGMA, LinearFit, fit_single_star, single_star_design
+from companions.noise import GLSFit, NoiseFit, fit_noise, gls
+from companions.orbit import fit_orbit, orbit_gls
 
 
 @dataclass
@@ -46,7 +49,8 @@ class OrbitResult:
 
 
 def period_search(ep, model="6p", noise=0.0, p_min=0.1, p_max=4.0, oversample=5,
-                  e_grid=(0.0, 0.25, 0.5, 0.75), n_tp=8) -> GridResult:
+                  e_grid=(0.0, 0.25, 0.5, 0.75), n_tp=8, s_tr=0.0) -> GridResult:
+    """noise: per-CCD jitter (float or 'agis'); s_tr > 0 adds per-transit correlated jitter."""
     baseline = np.ptp(ep.t)
     freqs = np.arange(1 / p_max, 1 / p_min, 1 / (oversample * baseline))
     periods = 1 / freqs
@@ -56,11 +60,15 @@ def period_search(ep, model="6p", noise=0.0, p_min=0.1, p_max=4.0, oversample=5,
         for e in e_grid:
             # circular orbits: all T_p span the same linear space
             for tp in ([0.0] if e == 0 else period * np.arange(n_tp) / n_tp):
-                c2 = fit_orbit(ep, period, e, tp, noise, model).chi2
+                c2 = (fit_orbit(ep, period, e, tp, noise, model).chi2 if s_tr == 0 else
+                      orbit_gls(ep, period, e, tp, float(noise), s_tr, model).chi2)
                 if c2 < chi2[k]:
                     chi2[k], best_e[k], best_tp[k] = c2, e, tp
-    return GridResult(periods, chi2, best_e, best_tp,
-                      fit_single_star(ep, model, noise).chi2)
+    if s_tr == 0:
+        chi2_star = fit_single_star(ep, model, noise).chi2
+    else:
+        chi2_star = _star_noise_gls(ep, model, float(noise), s_tr).chi2
+    return GridResult(periods, chi2, best_e, best_tp, chi2_star)
 
 
 def _local_minima(chi2: np.ndarray, n: int) -> np.ndarray:
@@ -87,3 +95,51 @@ def refine_orbit(ep, grid: GridResult, model="6p", noise=0.0, n_starts=5,
         if best is None or fit.chi2 < best.fit.chi2:
             best = OrbitResult(float(period), float(e), float(tp), fit, grid.chi2_star)
     return best
+
+
+def _star_prior(model):
+    return np.array([np.nan] * 5 + [COLOUR_PRIOR_SIGMA]) if model == "6p" else None
+
+
+def _star_noise_gls(ep, model, s_ccd, s_tr):
+    return gls(single_star_design(ep, model), ep.w, ep.sigma**2 + s_ccd**2, ep.transit,
+               s_tr**2, _star_prior(model))
+
+
+@dataclass
+class MLOrbitResult:
+    period: float
+    e: float
+    tp: float
+    s_ccd: float
+    s_tr: float
+    fit: GLSFit
+    star: NoiseFit            # ML single-star fit (its own jitters)
+
+    @property
+    def dlnl2(self) -> float:
+        return 2 * (self.fit.lnlike - self.star.fit.lnlike)
+
+
+def search_orbit_ml(ep, model="6p", n_starts=5, e_max=0.95, **grid_kw) -> MLOrbitResult:
+    """ML single-star noise fit -> period grid at that noise -> joint ML refinement of
+    (P, e, T_p, s_ccd, s_tr) from the best grid minima."""
+    star = fit_noise(single_star_design(ep, model), ep.w, ep.sigma, ep.transit, _star_prior(model))
+    grid = period_search(ep, model=model, noise=star.s_ccd, s_tr=star.s_tr, **grid_kw)
+
+    def nll(x):
+        return -orbit_gls(ep, x[0], x[1], x[2], x[3], x[4], model).lnlike
+
+    best = None
+    for i in _local_minima(grid.chi2, n_starts):
+        p0 = grid.periods[i]
+        x0 = [p0, min(grid.e[i], e_max - 1e-3), grid.tp[i], star.s_ccd, star.s_tr]
+        bounds = [(0.8 * p0, 1.25 * p0), (0.0, e_max), (x0[2] - 2 * p0, x0[2] + 2 * p0),
+                  (0.0, 5.0), (0.0, 5.0)]
+        sol = minimize(nll, x0, method="Powell", bounds=bounds,
+                       options={"xtol": 1e-8, "ftol": 1e-10, "maxfev": 20000})
+        if best is None or sol.fun < best.fun:
+            best = sol
+    period, e, tp, s_ccd, s_tr = (float(v) for v in best.x)
+    return MLOrbitResult(period, e, tp, s_ccd, s_tr,
+                         orbit_gls(ep, period, e, tp, s_ccd, s_tr, model), star)

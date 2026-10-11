@@ -13,6 +13,7 @@ from __future__ import annotations
 import numpy as np
 
 from companions.linear import COLOUR_PRIOR_SIGMA, LinearFit, noise_variance, single_star_design, wls
+from companions.noise import GLSFit, gls
 
 
 def solve_kepler(m, e: float, tol: float = 1e-14, max_iter: int = 50) -> np.ndarray:
@@ -60,11 +61,23 @@ def orbit_design(ep, period: float, e: float, tp: float) -> np.ndarray:
     return np.column_stack([c * x, s * x, c * y, s * y])
 
 
-def fit_orbit(ep, period: float, e: float, tp: float, noise=0.0, model: str = "6p") -> LinearFit:
-    """Single-star model + Keplerian orbit at fixed (P, e, T_p). Params: [star..., A, B, F, G]."""
-    star = single_star_design(ep, model)
-    design = np.hstack([star, orbit_design(ep, period, e, tp)])
+def star_orbit_design(ep, period: float, e: float, tp: float, model: str = "6p"):
+    """Design matrix [single star..., A, B, F, G] and matching prior_sigma vector."""
+    design = np.hstack([single_star_design(ep, model), orbit_design(ep, period, e, tp)])
     prior = np.full(design.shape[1], np.nan)
     if model == "6p":
         prior[5] = COLOUR_PRIOR_SIGMA
+    return design, prior
+
+
+def fit_orbit(ep, period: float, e: float, tp: float, noise=0.0, model: str = "6p") -> LinearFit:
+    """Single-star model + Keplerian orbit at fixed (P, e, T_p). Params: [star..., A, B, F, G]."""
+    design, prior = star_orbit_design(ep, period, e, tp, model)
     return wls(design, ep.w, noise_variance(ep, noise), prior)
+
+
+def orbit_gls(ep, period: float, e: float, tp: float, s_ccd: float = 0.0, s_tr: float = 0.0,
+              model: str = "6p") -> GLSFit:
+    """As fit_orbit, with per-CCD jitter s_ccd and per-transit correlated jitter s_tr [mas]."""
+    design, prior = star_orbit_design(ep, period, e, tp, model)
+    return gls(design, ep.w, ep.sigma**2 + s_ccd**2, ep.transit, s_tr**2, prior)

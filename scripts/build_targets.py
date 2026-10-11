@@ -44,6 +44,8 @@ import pandas as pd
 import requests
 from astroquery.gaia import Gaia
 
+from companions.precision import sigma_ccd_holl2023
+
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / "data" / "raw"
 OUT = ROOT / "data" / "targets.csv"
@@ -57,14 +59,9 @@ COMPANION_AU = (1, 3, 5)
 DCHI2_DETECT = 50.0            # Lammers & Winn 2025 DR4 detection threshold
 P_MAX_YR = 4.0                 # Lammers & Winn 2025: DR4 periods unreliable beyond ~4 yr
 
-# Holl et al. 2023 Fig. 3 "EDR3 adjusted" per-CCD AL uncertainty [mas], via gaiamock
-_G_GRID = [4, 5, 6, 7, 8.2, 8.4, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
-_SIG_CCD = [0.4, 0.35, 0.15, 0.17, 0.23, 0.13, 0.13, 0.135, 0.125, 0.13, 0.15, 0.23,
-            0.36, 0.63, 1.05, 2.05, 4.1]
-
 
 def sigma_fov_mas(g):
-    sig = np.interp(g, _G_GRID, _SIG_CCD) / np.sqrt(8.0)
+    sig = sigma_ccd_holl2023(g) / np.sqrt(8.0)
     return np.where(g < 13, np.hypot(sig, 0.02), sig)
 
 

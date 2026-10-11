@@ -23,6 +23,13 @@ Sensitivity model (rough, Phase 0 ranking only -- calibrate with injection-recov
   random scan angles is alpha/sqrt(2)). Ignores absorption of the orbit into the
   5-parameter solution, which matters when P approaches or exceeds the 5.5-yr baseline;
   the P_<m>MJ_<a>AU_yr columns let you flag those.
+* Detection-calibrated columns (Lammers & Winn 2025, arXiv:2511.04673): they detect when
+  Delta-chi2 > 50 (12- vs 5-parameter fit) and find periods unreliable beyond P ~ 4.0 yr in DR4.
+  For a circular orbit the mean-square AL signal per epoch is alpha^2 (1 + cos^2 i) / 4, so
+  Delta-chi2 ~ N alpha^2 (1 + cos^2 i) / (4 sigma^2). Companions aligned with a transiting
+  planet are edge-on (worst case), so mmin_mj_edge_* use Delta-chi2_edge = N alpha^2/(4 sigma^2)
+  = 50 at a = 1 AU and at the semi-major axis where P = 4 yr. (The snr_* columns above are
+  the face-on best case: Delta-chi2 = snr^2, so their threshold is snr ~ 7.1 face-on.)
 * epoch_rv_expected: G_RVS <= 14 (DR4 data model). grvs_best is DR3 grvs_mag, or for the
   ~13% of hosts without one, Sartoretti et al. 2023 Eqs. 9-10 from G and G_RP
   (agrees with DR3 grvs_mag to 0.03 mag rms on hosts that have both).
@@ -47,6 +54,8 @@ DR3_MONTHS, DR4_MONTHS = 34.0, 66.0
 DR4_BASELINE_YR = DR4_MONTHS / 12.0
 COMPANION_MJ = (1, 5)
 COMPANION_AU = (1, 3, 5)
+DCHI2_DETECT = 50.0            # Lammers & Winn 2025 DR4 detection threshold
+P_MAX_YR = 4.0                 # Lammers & Winn 2025: DR4 periods unreliable beyond ~4 yr
 
 # Holl et al. 2023 Fig. 3 "EDR3 adjusted" per-CCD AL uncertainty [mas], via gaiamock
 _G_GRID = [4, 5, 6, 7, 8.2, 8.4, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
@@ -143,6 +152,13 @@ def main() -> None:
                                 / df["sigma_fov_mas"]).round(2)
             df[f"P_yr_{tag}"] = np.sqrt(a**3 / (df["mstar_msun"] + mc * MJUP_MSUN)).round(2)
 
+    # minimum detectable mass for an edge-on circular orbit (Delta-chi2_edge = 50)
+    alpha_min_mas = df["sigma_fov_mas"] * np.sqrt(4 * DCHI2_DETECT / df["n_fov_dr4_est"])
+    df["a_P4yr_au"] = (df["mstar_msun"] * P_MAX_YR**2) ** (1 / 3)
+    for lab, a in (("1AU", 1.0), ("P4yr", df["a_P4yr_au"])):
+        df[f"mmin_mj_edge_{lab}"] = (alpha_min_mas * df["mstar_msun"] * df["dist_pc"]
+                                     / (a * MJUP_MSUN * 1e3)).round(2)
+
     keep = ["pl_name", "hostname", "source_id", "ra", "dec", "pl_bmassj", "pl_bmassprov",
             "pl_radj", "pl_orbper", "pl_orbsmax", "st_mass", "mstar_msun", "mstar_assumed",
             "st_teff", "sy_snum", "sy_pnum", "dist_pc", "r_lo_geo", "r_hi_geo", "parallax",
@@ -152,6 +168,7 @@ def main() -> None:
             "astrometric_excess_noise_sig", "non_single_star", "astrometric_matched_transits",
             "n_fov_dr4_est", "sigma_fov_mas"]
     keep += [c for c in df.columns if c.startswith(("alpha_uas_", "snr_", "P_yr_"))]
+    keep += ["a_P4yr_au", "mmin_mj_edge_1AU", "mmin_mj_edge_P4yr"]
     df = df[keep].sort_values("snr_5MJ_3AU", ascending=False)
     df.to_csv(OUT, index=False, float_format="%.6g")
 
@@ -164,6 +181,10 @@ def main() -> None:
         s = hosts[f"snr_{tag}"]
         print(f"  {tag:8s} hosts with S/N>=5: {(s >= 5).sum():4d}  >=10: {(s >= 10).sum():4d}"
               f"  >=20: {(s >= 20).sum():4d}")
+    print("edge-on, Delta-chi2>50 (Lammers & Winn threshold): hosts with m_min <= X M_J")
+    for lab in ("1AU", "P4yr"):
+        m = hosts[f"mmin_mj_edge_{lab}"]
+        print(f"  {lab:5s} " + "  ".join(f"<={x}: {(m <= x).sum():4d}" for x in (1, 2, 5, 13)))
 
 
 if __name__ == "__main__":

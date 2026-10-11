@@ -13,7 +13,7 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.optimize import least_squares, minimize
 
-from companions.linear import COLOUR_PRIOR_SIGMA, LinearFit, fit_single_star, single_star_design
+from companions.linear import LinearFit, fit_single_star, single_star_design, single_star_prior
 from companions.noise import GLSFit, NoiseFit, fit_noise, gls
 from companions.orbit import fit_orbit, orbit_gls
 
@@ -97,13 +97,9 @@ def refine_orbit(ep, grid: GridResult, model="6p", noise=0.0, n_starts=5,
     return best
 
 
-def _star_prior(model):
-    return np.array([np.nan] * 5 + [COLOUR_PRIOR_SIGMA]) if model == "6p" else None
-
-
 def _star_noise_gls(ep, model, s_ccd, s_tr):
     return gls(single_star_design(ep, model), ep.w, ep.sigma**2 + s_ccd**2, ep.transit,
-               s_tr**2, _star_prior(model))
+               s_tr**2, single_star_prior(model))
 
 
 @dataclass
@@ -124,7 +120,7 @@ class MLOrbitResult:
 def search_orbit_ml(ep, model="6p", n_starts=5, e_max=0.95, **grid_kw) -> MLOrbitResult:
     """ML single-star noise fit -> period grid at that noise -> joint ML refinement of
     (P, e, T_p, s_ccd, s_tr) from the best grid minima."""
-    star = fit_noise(single_star_design(ep, model), ep.w, ep.sigma, ep.transit, _star_prior(model))
+    star = fit_noise(single_star_design(ep, model), ep.w, ep.sigma, ep.transit, single_star_prior(model))
     grid = period_search(ep, model=model, noise=star.s_ccd, s_tr=star.s_tr, **grid_kw)
 
     def nll(x):

@@ -28,6 +28,11 @@ def single_star_design(ep, model: str = "6p") -> np.ndarray:
     return np.column_stack(cols)
 
 
+def single_star_prior(model: str = "6p"):
+    """prior_sigma vector for single_star_design columns (NaN = no prior), or None."""
+    return np.array([np.nan] * 5 + [COLOUR_PRIOR_SIGMA]) if model == "6p" else None
+
+
 @dataclass
 class LinearFit:
     params: np.ndarray
@@ -61,8 +66,5 @@ def noise_variance(ep, noise) -> np.ndarray:
 
 
 def fit_single_star(ep, model: str = "6p", noise="agis") -> LinearFit:
-    design = single_star_design(ep, model)
-    prior = None
-    if model == "6p":
-        prior = np.array([np.nan] * 5 + [COLOUR_PRIOR_SIGMA])
-    return wls(design, ep.w, noise_variance(ep, noise), prior)
+    return wls(single_star_design(ep, model), ep.w, noise_variance(ep, noise),
+               single_star_prior(model))

@@ -132,7 +132,8 @@ def main(argv=None) -> None:
     rng = np.random.default_rng(args.seed)
 
     from companions.cascade import Thresholds
-    thr = Thresholds.from_csv(fap=cfg["fap_per_star"])
+    thr = Thresholds.from_csv(ROOT / cfg.get("thresholds_file", "results/thresholds.csv"),
+                              fap=cfg["fap_per_star"])
     hosts = build_hosts()
     if args.limit:
         hosts = hosts.head(args.limit).copy()

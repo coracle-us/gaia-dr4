@@ -8,7 +8,24 @@
   "backoff_s": 60,
   "dr4_source_id": "same_as_dr3",
   "model": "6p",
-  "fap_per_star": 1e-4,
+  "fap_per_star": 0.0001,
   "procs": 30,
-  "posterior": {"n_walkers": 32, "n_steps": 2000, "burn": 700}
+  "posterior": {
+    "n_walkers": 32,
+    "n_steps": 2000,
+    "burn": 700
+  },
+  "thresholds_file": "results/thresholds.csv",
+  "control": {
+    "_comment": "Control stars for the real-data null; verify table names on release day.",
+    "gaia_source_table": "gaiadr4.gaia_source",
+    "nss_tables": [
+      "gaiadr4.nss_two_body_orbit",
+      "gaiadr4.nss_acceleration_astro"
+    ],
+    "candidate_adql": "SELECT source_id, ra, dec, phot_g_mean_mag, ruwe FROM {table} WHERE 1 = CONTAINS(POINT('ICRS', ra, dec), CIRCLE('ICRS', {ra}, {dec}, {radius})) AND phot_g_mean_mag BETWEEN {gmin} AND {gmax} AND ruwe < {max_ruwe}",
+    "max_sep_deg": 3.0,
+    "max_dg": 0.5,
+    "max_ruwe": 1.1
+  }
 }

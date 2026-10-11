@@ -49,3 +49,18 @@ def test_posterior_covers_injected_orbit(prerelease_table):
         z = abs(np.median(x) - true) / np.std(x)
         assert z < 3, f"{name}: median {np.median(x):.4f} sd {np.std(x):.4f} truth {true:.4f}"
     assert post.linear.shape == (len(post.period), 9)
+
+
+def test_log_prob_wraps_mean_anomaly_and_survives_degeneracy(prerelease_table):
+    from companions.posterior import orbit_log_prob
+    ep = EpochData.from_table(prerelease_table, GAIA4)
+    x = np.array([1.5, 0.3, 0.7, 0.05, 0.01])
+    lp = orbit_log_prob(x, ep, "6p", 1.0, 2.0, 0.95)
+    assert np.isfinite(lp)
+    far = x.copy()
+    far[2] += 2 * np.pi * 1e6                        # walkers drifting far away in M0
+    assert orbit_log_prob(far, ep, "6p", 1.0, 2.0, 0.95) == pytest.approx(lp, abs=1e-4)
+    # extreme drift (seen in the dry run: M0 ~ 7e16) must not raise
+    val = orbit_log_prob(np.array([1.5, 0.3, 7e16, 0.05, 0.01]), ep, "6p", 1.0, 2.0, 0.95)
+    assert isinstance(val, float)
+    assert orbit_log_prob(np.array([5.0, 0.3, 0.7, 0.05, 0.01]), ep, "6p", 1.0, 2.0, 0.95) == -np.inf

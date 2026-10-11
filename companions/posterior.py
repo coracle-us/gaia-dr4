@@ -46,20 +46,33 @@ class OrbitPosterior:
     acceptance: float
 
 
+def orbit_log_prob(x, ep, model, p_lo, p_hi, e_max) -> float:
+    """Marginal log posterior of theta = (P, e, M0, s_ccd, s_tr); M0 is wrapped to [-pi, pi)
+    (walkers can drift by many cycles) and numerical failures count as zero probability."""
+    period, e, m0, s_ccd, s_tr = x
+    if not (p_lo < period < p_hi and 0 <= e < e_max and s_ccd >= 0 and s_tr >= 0
+            and np.isfinite(m0)):
+        return -np.inf
+    m0 = np.mod(m0 + np.pi, 2 * np.pi) - np.pi
+    try:
+        fit = orbit_gls(ep, period, e, -m0 * period / (2 * np.pi), s_ccd, s_tr, model)
+        lp = fit.lnlike + 0.5 * np.linalg.slogdet(fit.cov)[1]
+    except np.linalg.LinAlgError:
+        return -np.inf
+    return float(lp) if np.isfinite(lp) else -np.inf
+
+
 def sample_orbit(ep, ml, model="6p", n_walkers=32, n_steps=3000, burn=1000, seed=0,
                  p_width=0.3, e_max=0.95) -> OrbitPosterior:
     p_lo, p_hi = ml.period * (1 - p_width), ml.period * (1 + p_width)
 
     def unpack(x):
         period, e, m0, s_ccd, s_tr = x
+        m0 = np.mod(m0 + np.pi, 2 * np.pi) - np.pi
         return period, e, -m0 * period / (2 * np.pi), s_ccd, s_tr
 
     def log_prob(x):
-        period, e, tp, s_ccd, s_tr = unpack(x)
-        if not (p_lo < period < p_hi and 0 <= e < e_max and s_ccd >= 0 and s_tr >= 0):
-            return -np.inf
-        fit = orbit_gls(ep, period, e, tp, s_ccd, s_tr, model)
-        return fit.lnlike + 0.5 * np.linalg.slogdet(fit.cov)[1]
+        return orbit_log_prob(x, ep, model, p_lo, p_hi, e_max)
 
     rng = np.random.default_rng(seed)
     x0 = np.array([ml.period, ml.e, -2 * np.pi * ml.tp / ml.period, ml.s_ccd, ml.s_tr])
@@ -79,6 +92,7 @@ def sample_orbit(ep, ml, model="6p", n_walkers=32, n_steps=3000, burn=1000, seed
         lin.append(rng.multivariate_normal(fit.params, fit.cov))
     lin = np.array(lin)
     a0, inc, om, big_om = campbell_from_thiele_innes(*lin[:, -4:].T)
-    period, e, tp = chain[:, 0], chain[:, 1], -chain[:, 2] * chain[:, 0] / (2 * np.pi)
+    m0 = np.mod(chain[:, 2] + np.pi, 2 * np.pi) - np.pi
+    period, e, tp = chain[:, 0], chain[:, 1], -m0 * chain[:, 0] / (2 * np.pi)
     return OrbitPosterior(period, e, tp, chain[:, 3], chain[:, 4], lin, a0, inc, om, big_om,
                           float(np.mean(sampler.acceptance_fraction)))

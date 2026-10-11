@@ -38,7 +38,7 @@ Read this file first. It is the source of truth for scope, schedule and rules.
 - The first weeks after a big release are when an independent team can contribute
   something new. We use the next seven weeks to be ready.
 
-## 2. The science question (working; finalize in Phase 0)
+## 2. The science question (decided 2026-10-11: A, narrowed)
 
 **Do stars hosting transiting hot/warm Jupiters have outer giant companions, and how
 often?**
@@ -55,7 +55,21 @@ pathways. That's a sharp, timely question that DR4 enables.
 Ties to the sister project (`duotransits` repo): warm Jupiters are the population we're
 characterizing there.
 
-**Alternatives to evaluate in Phase 0** (pick by ~1 Nov 2026):
+**Decision (2026-10-11, Jon): option A, narrowed.** Framing for the RNAAS note:
+*DR4 constraints on outer giant companions to all ~790 transiting giant-planet hosts.*
+- Headline product: one table, per host, of detections, acceleration-only signals, and
+  completeness-corrected upper limits (a uniform population result; targeted competitors
+  will publish selected detections, not limits).
+- Impostor vetting from option C folded in: DR4 epoch RVs (703 hosts), DPAC NSS tables,
+  colour–magnitude position, RUWE > 1.4 hosts flagged (52).
+- Mutual inclinations: minimum ΔI reported only for detections, framed as building on
+  Xiao et al. 2026 (arXiv:2609.01377); cite and compare DPAC's Exoplanet Candidate
+  Catalogue and RV-constrained orbits.
+- Fallback if DPAC already publishes orbits for most sensitive hosts: limits + vetting.
+Rationale (sensitivity, overlap, competition, feasibility): `notes/dr4_paper_overlap.md`,
+`notes/literature.md`.
+
+**Alternatives considered in Phase 0** (rejected; kept for the record):
 - (A) the question above: transiting giant-planet hosts (default);
 - (B) companions to nearby M dwarfs or white dwarfs (high sensitivity, high impostor risk);
 - (C) a validation/impostor study: which DR4 candidates are binaries in disguise.
@@ -88,7 +102,7 @@ file. Use them to rank targets by expected S/N.
 5. Target list: transiting giant planets (M_p or R_p ⇒ giant) from the NASA Exoplanet
    Archive, with Gaia DR3 source_id, distance, G mag, RUWE. Compute expected sensitivity
    to a 1 M_J and 5 M_J companion at 1–5 AU. Save `data/targets.csv`.
-6. Decide the question (A/B/C) and write it down here.
+6. Decide the question (A/B/C) and write it down here. **Done: A, narrowed (§2).**
 
 ### Phase 1 — Build and validate (Nov)
 1. Model: 6-parameter single-star astrometry (5 astrometric + pseudo-colour, as in the
@@ -151,13 +165,12 @@ file. Use them to rank targets by expected S/N.
 
 ## 8. Status (updated 2026-10-11)
 
-- DR4 date confirmed (2 Dec 2026). Question chosen provisionally (A).
-- Phase 0 steps 1–5 done: `notes/dr4_data_model.md`, `notes/dr4_paper_overlap.md`,
+- DR4 date confirmed (2 Dec 2026). Question decided: A, narrowed (§2).
+- Phase 0 steps 1–6 done: `notes/dr4_data_model.md`, `notes/dr4_paper_overlap.md`,
   `notes/literature.md`, `data/targets.csv` (`scripts/build_targets.py`), pre-release plot
   (`scripts/plot_prerelease.py`), prior-astrometry cross-match and known-companion
   validation set (`scripts/crossmatch_prior_astrometry.py`, `scripts/validation_systems.py`).
-  Remaining: step 6 (decide A/B/C; notes recommend A narrowed to a uniform detections +
-  upper-limits pass with epoch-RV impostor vetting, given external competition).
+  Step 6 done (A, narrowed). Phase 0 complete; next is Phase 1.
 - Sensitivity (edge-on, Lammers & Winn Δχ² > 50, P ≤ 4 yr): 73 hosts reach ≤ 5 M_J,
   370 reach ≤ 13 M_J. Most known outer companions have P > 4 yr, so Phase 1 needs
   acceleration models and a joint astrometry + RV mode (see `notes/literature.md` §0).

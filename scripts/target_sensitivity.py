@@ -2,7 +2,8 @@
 
 Inputs : results/injection_recovery.csv, results/thresholds.csv, data/targets.csv,
          gaiascanlaw grid (companions.scanlaw) for each host's predicted DR4 transits
-Output : results/target_sensitivity.csv; summary printed.
+Output : results/target_sensitivity.csv, results/completeness_models.csv (logistic parameters per
+         period bin and geometry, used by companions.population); summary printed.
 Method : for each period bin and geometry, fit a logistic detection probability
          p(detect) = 1 / (1 + exp(-k (ln dchi2_exp - ln d50)))
 to the injections (detection: orbit dlnl2 > threshold at FAP 1e-4 per star). For each host,
@@ -59,13 +60,17 @@ def main() -> None:
     t_orb = float(thr[(thr.statistic == "dlnl2_orbit") & (thr.fap_per_star == 1e-4)].threshold.iloc[0])
     inj = pd.read_csv(RES / "injection_recovery.csv")
     inj["det"] = (inj.dlnl2_orbit > t_orb).astype(float)
-    models = {}
-    for plo, phi in P_BINS:
-        s = inj[(inj.aligned) & (inj.period_true >= plo) & (inj.period_true < phi)]
-        k, ln_d50 = fit_logistic(np.log(s.dchi2_exp_actual.to_numpy()), s.det.to_numpy())
-        models[(plo, phi)] = (k, ln_d50)
-        print(f"aligned, P {plo}-{phi} yr: n = {len(s)}, d50 = {np.exp(ln_d50):.0f}, "
-              f"d90 = {np.exp(ln_d50 + np.log(9) / k):.0f}, slope k = {k:.2f}")
+    models, rows = {}, []
+    for aligned in (True, False):
+        for plo, phi in P_BINS:
+            s = inj[(inj.aligned == aligned) & (inj.period_true >= plo) & (inj.period_true < phi)]
+            k, ln_d50 = fit_logistic(np.log(s.dchi2_exp_actual.to_numpy()), s.det.to_numpy())
+            rows.append(dict(aligned=aligned, p_lo=plo, p_hi=phi, n=len(s), k=k, ln_d50=ln_d50))
+            if aligned:
+                models[(plo, phi)] = (k, ln_d50)
+            print(f"{'aligned' if aligned else 'isotropic'}, P {plo}-{phi} yr: n = {len(s)}, "
+                  f"d50 = {np.exp(ln_d50):.0f}, d90 = {np.exp(ln_d50 + np.log(9) / k):.0f}, k = {k:.2f}")
+    pd.DataFrame(rows).to_csv(RES / "completeness_models.csv", index=False, float_format="%.5g")
 
     sl = ScanLaw.load()
     hosts = (pd.read_csv(ROOT / "data" / "targets.csv", dtype={"source_id": "Int64"})

@@ -14,8 +14,11 @@ mutual inclination with the transiting planet, min(|i - i_b|, |i - (180 - i_b)|)
 does not fix the sense of i_b, and astrometry gives no relative node).
 Optional: posterior sampling (companions.posterior) and joint fit with literature RVs.
 Vetting flags (notes/phase1_validation.md):
-  high_e_check (e > 0.8; null false positives are e > 0.9 fits), unstable_subsets (orbit not
-  recovered when any one fifth of the transits, in time order, is dropped), marginal
+  high_e_check (e > 0.8; null false positives are e > 0.9 fits),
+  stability_confirmed / stability_not_confirmed (orbit re-found, P within 10% and dlnl2 > 0.5 of
+  the full value, in all five drop-one-fifth subsets; scripts/calibrate_stability.py: passed by
+  3% of the strongest noise solutions but 44-69% of genuine detections with dlnl2 40-120, so a
+  pass is strong support while a non-pass is weak evidence against), marginal
   (dlnl2 < 1.25 T), twin_excluded_lit_rv / impostor_not_excluded, stellar_companion_check
   (RUWE > 1.4 or prior HGCA / PMa / DR3 NSS evidence), brown_dwarf_mass (13-80 M_J) /
   stellar_mass (> 80 M_J; dark-companion mass, so a luminous companion is heavier still).
@@ -158,8 +161,7 @@ def run_cascade(ep, host: HostInfo, thr: Thresholds, model="6p", rv=None,
             res.flags.append("marginal")
         if do_stability:
             res.stable = stability_check(ep, orb.period, orb.dlnl2, model)
-            if not res.stable:
-                res.flags.append("unstable_subsets")
+            res.flags.append("stability_confirmed" if res.stable else "stability_not_confirmed")
         if do_posterior:
             from companions.posterior import sample_orbit
             post = sample_orbit(ep, orb, model=model, **(posterior_kw or {}))

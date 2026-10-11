@@ -171,6 +171,11 @@ file. Use them to rank targets by expected S/N.
   (`scripts/plot_prerelease.py`), prior-astrometry cross-match and known-companion
   validation set (`scripts/crossmatch_prior_astrometry.py`, `scripts/validation_systems.py`).
   Step 6 done (A, narrowed). Phase 0 complete; next is Phase 1.
+- Phase 1 in progress (`companions/` package, `pytest`; log in `notes/phase1_validation.md`):
+  single-star fit reproduces gaiasupdate exactly; Keplerian orbit + period search; ML noise
+  model (per-CCD + per-transit jitter, statistic dlnl2); posterior sampling; Gaia-4b recovered
+  from the DR4 pre-release and cross-checked with exogaia. Next: acceleration models, joint
+  RV mode, injection–recovery / null calibration on realistic DR4 sampling.
 - Sensitivity (edge-on, Lammers & Winn Δχ² > 50, P ≤ 4 yr): 73 hosts reach ≤ 5 M_J,
   370 reach ≤ 13 M_J. Most known outer companions have P > 4 yr, so Phase 1 needs
   acceleration models and a joint astrometry + RV mode (see `notes/literature.md` §0).

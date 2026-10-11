@@ -84,3 +84,63 @@ Sources: `scripts/validate_gaia4.py` → `results/gaia4_validation.csv`; `exogai
 - Joint astrometry + RV fit. Confirm the ω convention (photocentre vs. primary) before combining with RVs.
 - Acceleration (7p/9p) models.
 - Null and injection calibration of dlnl2 on realistic DR4 sampling (scanning law), including edge-on orbits.
+
+## 2026-10-11 (later): acceleration models and joint astrometry + RV fit
+
+### Acceleration models (`companions/accel.py`)
+
+- 7- and 9-parameter models with the same definition as DR3 `nss_acceleration_astro`: g t²/2 and ġ t³/6 in α* and δ, at J2017.5. Both use ML jitters.
+- On pure noise, dlnl2 behaves like χ² with 4 degrees of freedom (max of 5 seeds < 18.5).
+- A 14-year orbit (a₀ = 0.6 mas) is detected as acceleration with dlnl2 > 50.
+
+### Joint fit (`companions/joint.py`)
+
+**Parametrisation**
+- Nonlinear: P, e, M0, a₀, cos i, ω, Ω, s_ccd, s_tr, and one RV jitter per instrument.
+- Profiled linear: single-star astrometry, RV offsets, and the K of inner transiting planets (circular, with fixed P and T_c).
+- K is derived as 2π (a₀/ϖ) sin i / (P √(1−e²)).
+
+**Convention**
+- Gaia DR3 AstroSpectroSB1 / nsstools: the same ω in the astrometry and in RV = K[cos(ν+ω) + e cos ω].
+- Tested as RV = dz/dt, with z = C X + H Y.
+- Astrometry alone is degenerate under (ω, Ω) ↔ (ω+π, Ω+π). The fit tries both branches and the RVs choose. On synthetic data the correct branch, K (within 1%) and the offsets are recovered.
+
+### Gaia-4b: DR4 pre-release astrometry + Stefansson+25 RVs
+
+Sources: `scripts/validate_gaia4_joint.py` → `results/gaia4_joint_validation.csv`. The 23 RVs come from AJ 169, 107, Table 5 (machine-readable), saved as `data/raw/literature_rv/`.
+
+**RV-only fit with our RV model**
+
+| | P (d) | e | K (m/s) | ω (°) |
+|---|---|---|---|---|
+| Ours | 506 | 0.247 | 353.6 | 181.7 |
+| Published RV-only | 513 (+21/−16) | 0.263 | 355 | 181.8 |
+
+The RV model and its convention are verified.
+
+**Joint fit**
+- The RVs select the Ω = 172.6° branch, matching the published 158.6° branch rather than its +180° twin. This is pinned by a slow test.
+- Comparison with the published joint fit, which used the DR3 orbit with the same RVs:
+
+  | Parameter | Our joint | Published joint | Difference |
+  |---|---|---|---|
+  | P (d) | 575.5 | 571.3 ± 1.4 | 3.1σ |
+  | e | 0.32 | 0.338 | 0.6σ |
+  | i (°) | 120.3 | 116.9 | 0.8σ |
+  | Ω (°) | 172.6 | 158.6 | 2.7σ |
+  | ω (°) | 200 | 180.3 | 3.8σ |
+  | K (m/s) | 320 | 368 | 2.4σ |
+  | M (M_J) | 10.8 | 11.8 | 1.4σ |
+
+**Tension between DR4 astrometry and the RVs**
+- 2[lnL_astro-only + lnL_RV-only − lnL_joint] = 17.8, with about 5 shared constraints (P, e, T_p, ω, and K ↔ a₀ sin i). That is roughly 3σ.
+- Main drivers:
+  - DR4 gives a₀ = 0.25 mas, but the RV K needs a₀ ≈ 0.29 mas at i = 120°.
+  - DR4 gives ω = 215 ± 10°, against 182 ± 7° from the RVs.
+- **Our code is not the cause.** The RV-only fit matches the paper, the astrometry-only fit matches exogaia, and the conventions are pinned by tests.
+- **Possible causes:**
+  - pre-release (RC3) processing systematics;
+  - correlated noise not captured by our two jitter terms;
+  - a second companion or a trend.
+
+**Release-day action.** Re-fit Gaia-4 with the final DR4 data. If astrometry–RV tension of this size recurs on known systems, it will limit our joint-fit claims (masses and mutual inclinations).

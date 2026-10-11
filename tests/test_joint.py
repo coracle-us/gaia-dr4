@@ -73,3 +73,20 @@ def test_joint_lnlike_is_sum_of_astrometric_and_rv_parts(prerelease_table):
     ep, rv, _ = _synthetic(prerelease_table, seed=4)
     res = fit_joint_ml(ep, rv, model="5p")
     assert res.lnlike == pytest.approx(res.lnlike_astro + res.lnlike_rv)
+
+
+@pytest.mark.slow
+def test_gaia4_joint_fit_selects_published_node_branch(prerelease_table):
+    """Real data: DR4 pre-release astrometry + Stefansson+2025 RVs. The RVs must pick the
+    Omega ~ 160-175 deg branch (published joint: 158.6 +- 5.1), not Omega + 180."""
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+    from validate_gaia4_joint import RV_FILE, read_mrt_rv
+    if not RV_FILE.exists():
+        pytest.skip("Gaia-4 RV table not downloaded")
+    df = read_mrt_rv(RV_FILE)
+    rv = RVData.from_bjd_tdb(df["bjd_tdb"], df["rv"], df["err"], list(df["inst"]))
+    res = fit_joint_ml(EpochData.from_table(prerelease_table, GAIA4), rv, model="6p")
+    assert 145 < np.rad2deg(res.big_omega) < 195
+    assert res.k == pytest.approx(368, rel=0.25)

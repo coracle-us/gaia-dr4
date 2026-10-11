@@ -6,3 +6,5 @@ pandas
 matplotlib
 emcee
 requests
+astropy
+gaiasupdate>=0.1.2

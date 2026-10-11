@@ -1,0 +1,13 @@
+statistic,fap_per_star,threshold,method,n_null,max_null
+dlnl2_orbit,0.01,28.79,empirical,10000,50.7
+dlnl2_orbit,0.001,35.1,empirical,10000,50.7
+dlnl2_orbit,0.0001,42.57,exp-tail,10000,50.7
+dlnl2_acc7,0.01,10.8,empirical,10000,21.29
+dlnl2_acc7,0.001,16.42,empirical,10000,21.29
+dlnl2_acc7,0.0001,21.67,exp-tail,10000,21.29
+dlnl2_acc9,0.01,14.97,empirical,10000,25.74
+dlnl2_acc9,0.001,20.8,empirical,10000,25.74
+dlnl2_acc9,0.0001,27.08,exp-tail,10000,25.74
+dlnl2_orbit[G 0-11],0.0001,39.26,exp-tail,2278,33.82
+dlnl2_orbit[G 11-13],0.0001,44.56,exp-tail,4488,50.7
+dlnl2_orbit[G 13-25],0.0001,41.17,exp-tail,3234,38.43

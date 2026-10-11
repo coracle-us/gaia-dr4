@@ -1,0 +1,8 @@
+astroquery>=0.4.7
+pyvo
+numpy
+scipy
+pandas
+matplotlib
+emcee
+requests

@@ -174,8 +174,10 @@ file. Use them to rank targets by expected S/N.
 - Phase 1 in progress (`companions/` package, `pytest`; log in `notes/phase1_validation.md`):
   single-star fit reproduces gaiasupdate exactly; Keplerian orbit + period search; ML noise
   model (per-CCD + per-transit jitter, statistic dlnl2); posterior sampling; Gaia-4b recovered
-  from the DR4 pre-release and cross-checked with exogaia. Next: acceleration models, joint
-  RV mode, injection–recovery / null calibration on realistic DR4 sampling.
+  from the DR4 pre-release and cross-checked with exogaia; 7p/9p acceleration models; joint
+  astrometry + RV fit (validated on Gaia-4b RVs; DR4-pre-release vs RV tension ~3σ, see log).
+  Next: injection–recovery / null calibration on realistic DR4 sampling (edge-on orbits,
+  FAP ≪ 1/790), then model-selection cascade and release-day dry run.
 - Sensitivity (edge-on, Lammers & Winn Δχ² > 50, P ≤ 4 yr): 73 hosts reach ≤ 5 M_J,
   370 reach ≤ 13 M_J. Most known outer companions have P > 4 yr, so Phase 1 needs
   acceleration models and a joint astrometry + RV mode (see `notes/literature.md` §0).

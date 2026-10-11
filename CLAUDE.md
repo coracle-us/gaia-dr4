@@ -30,9 +30,9 @@ Read this file first. It is the source of truth for scope, schedule and rules.
   in DR4, mostly super-Jupiters (3–13 M_J) on 2–5 AU orbits around GKM stars within
   ~500 pc, and warn that unresolved binaries create impostors.
 - ESA has already published: a **draft DR4 data model**, a **pre-release sample of epoch
-  astrometry** for a few stars (June 2026) with an exploration tool, an announced
-  **Python package for fitting single-star models to epoch astrometry**, and a list of the
-  **60+ DR4 collaboration paper titles**. All on the Gaia news / DR4 pages at
+  astrometry** for 12 stars (June 2026), the **released** Python package for fitting
+  single-star models to epoch astrometry (`gaiasupdate`, PyPI, June 2026; no orbit model),
+  and a list of the **DR4 collaboration paper titles** (86 entries). All on the Gaia news / DR4 pages at
   https://www.cosmos.esa.int/web/gaia/ . Mock planet + impostor-binary catalogs from the
   forecast paper: GitHub `CalebLammers/GaiaForecasts`.
 - The first weeks after a big release are when an independent team can contribute
@@ -76,7 +76,7 @@ file. Use them to rank targets by expected S/N.
 
 ### Phase 0 — Scope (now → ~1 Nov)
 1. Read the DR4 draft data model: table names, epoch-astrometry fields (times, scan angle,
-   along-scan positions/residuals, uncertainties, flags), access method (TAP/ADQL,
+   along-scan positions, uncertainties, flags), access method (TAP/ADQL,
    DataLink, bulk). Write `notes/dr4_data_model.md`.
 2. Download the pre-release epoch-astrometry sample (announced on Gaia news, June 2026;
    it may not be listed on the previews page); load it; plot it. Note how many targets
@@ -94,8 +94,13 @@ file. Use them to rank targets by expected S/N.
 1. Model: 5-parameter single-star astrometry + Keplerian orbit (photocenter), using the
    along-scan 1-D formulation Gaia actually measures. Linear Thiele–Innes parameters +
    nonlinear (P, e, T_p) search; periodogram over P ≤ ~4 yr (≤ the DR4 baseline).
-2. Use ESA's single-star fitting package when released; our orbital extension must
-   reproduce its single-star fits exactly when the orbit term is off.
+2. Use ESA's single-star fitting package (`gaiasupdate`, already released); our orbital
+   extension must reproduce its single-star fits exactly when the orbit term is off.
+   Note the DR4 core solution is 6-parameter (`6p_constrained_colour`: 5 astrometric +
+   pseudo-colour), and the epoch data are measured AL positions (`centroid_pos_al`,
+   relative to a per-source reference point `ra0`/`dec0`), **not residuals**: we fit the
+   full model to the positions. Weight by `centroid_pos_error_al` only, not
+   `agis_source_excess_noise` (which absorbs orbital signal). See `notes/dr4_data_model.md`.
 3. **Injection–recovery**: simulate epoch astrometry with realistic scan times/angles and
    noise (use the pre-release sample's sampling, a scanning-law tool, or DR4 docs), inject
    planets and impostor binaries (GaiaForecasts mocks), measure completeness and false
@@ -139,9 +144,15 @@ file. Use them to rank targets by expected S/N.
 - Windows machine (Jon). Python venv in `.venv`. Network access to ESA/NASA archives is
   direct from this machine.
 - Useful: `astroquery` (Gaia TAP), `pyvo`, `numpy`/`scipy`, `emcee` or `dynesty` for
-  posteriors, `matplotlib`. Check for an official DR4 epoch-astrometry Python package.
+  posteriors, `matplotlib`. Official DR4 epoch-astrometry package: `gaiasupdate`
+  (installed, in `requirements.txt`). Third-party DR4-ready orbit fitter for
+  cross-checks: `exogaia` (T. Stolker).
 
-## 8. Status at handoff (2026-10-11)
+## 8. Status (updated 2026-10-11)
 
 - DR4 date confirmed (2 Dec 2026). Question chosen provisionally (A).
-- Nothing built yet. Start with Phase 0.
+- Phase 0 steps 1, 2, 3, 5 done: `notes/dr4_data_model.md`, `notes/dr4_paper_overlap.md`,
+  `data/targets.csv` (`scripts/build_targets.py`), pre-release plot
+  (`scripts/plot_prerelease.py`). Remaining: step 4 (literature), step 6 (decide A/B/C;
+  overlap notes recommend A narrowed to a uniform detections + upper-limits pass with
+  epoch-RV impostor vetting, given external competition).

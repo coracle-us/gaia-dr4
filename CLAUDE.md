@@ -152,8 +152,12 @@ file. Use them to rank targets by expected S/N.
 ## 8. Status (updated 2026-10-11)
 
 - DR4 date confirmed (2 Dec 2026). Question chosen provisionally (A).
-- Phase 0 steps 1, 2, 3, 5 done: `notes/dr4_data_model.md`, `notes/dr4_paper_overlap.md`,
-  `data/targets.csv` (`scripts/build_targets.py`), pre-release plot
-  (`scripts/plot_prerelease.py`). Remaining: step 4 (literature), step 6 (decide A/B/C;
-  overlap notes recommend A narrowed to a uniform detections + upper-limits pass with
-  epoch-RV impostor vetting, given external competition).
+- Phase 0 steps 1–5 done: `notes/dr4_data_model.md`, `notes/dr4_paper_overlap.md`,
+  `notes/literature.md`, `data/targets.csv` (`scripts/build_targets.py`), pre-release plot
+  (`scripts/plot_prerelease.py`), prior-astrometry cross-match and known-companion
+  validation set (`scripts/crossmatch_prior_astrometry.py`, `scripts/validation_systems.py`).
+  Remaining: step 6 (decide A/B/C; notes recommend A narrowed to a uniform detections +
+  upper-limits pass with epoch-RV impostor vetting, given external competition).
+- Sensitivity (edge-on, Lammers & Winn Δχ² > 50, P ≤ 4 yr): 73 hosts reach ≤ 5 M_J,
+  370 reach ≤ 13 M_J. Most known outer companions have P > 4 yr, so Phase 1 needs
+  acceleration models and a joint astrometry + RV mode (see `notes/literature.md` §0).

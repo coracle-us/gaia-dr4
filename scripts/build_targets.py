@@ -23,6 +23,9 @@ Sensitivity model (rough, Phase 0 ranking only -- calibrate with injection-recov
   random scan angles is alpha/sqrt(2)). Ignores absorption of the orbit into the
   5-parameter solution, which matters when P approaches or exceeds the 5.5-yr baseline;
   the P_<m>MJ_<a>AU_yr columns let you flag those.
+* epoch_rv_expected: G_RVS <= 14 (DR4 data model). grvs_best is DR3 grvs_mag, or for the
+  ~13% of hosts without one, Sartoretti et al. 2023 Eqs. 9-10 from G and G_RP
+  (agrees with DR3 grvs_mag to 0.03 mag rms on hosts that have both).
 """
 from __future__ import annotations
 
@@ -56,6 +59,15 @@ def sigma_fov_mas(g):
     return np.where(g < 13, np.hypot(sig, 0.02), sig)
 
 
+def grvs_from_g_rp(g, rp):
+    """Sartoretti et al. 2023 (A&A 674, A6) Eqs. 9-10: G_RVS - G_RP vs G - G_RP,
+    valid -0.15 <= G-G_RP <= 1.7; colours outside are clamped to the nearest end."""
+    x = np.clip(np.asarray(g - rp, dtype=float), -0.15, 1.7)
+    blue = -0.0397 - 0.2852 * x - 0.0330 * x**2 - 0.0867 * x**3
+    red = -4.0618 + 10.0187 * x - 9.0532 * x**2 + 2.6089 * x**3
+    return rp + np.where(x <= 1.2, blue, red)
+
+
 def fetch_archive() -> pd.DataFrame:
     cache = RAW / "nea_pscomppars_transiting.csv"
     if not cache.exists():
@@ -87,7 +99,7 @@ def fetch_gaia(source_ids: np.ndarray) -> pd.DataFrame:
             id_list = ",".join(str(s) for s in ids[i:i + 200])
             q = f"""
             select g.source_id, g.ra as gaia_ra, g.dec as gaia_dec, g.parallax,
-                   g.parallax_error, g.phot_g_mean_mag, g.grvs_mag, g.rv_nb_transits, g.ruwe,
+                   g.parallax_error, g.phot_g_mean_mag, g.phot_rp_mean_mag, g.grvs_mag, g.rv_nb_transits, g.ruwe,
                    g.astrometric_matched_transits, g.astrometric_excess_noise,
                    g.astrometric_excess_noise_sig, g.non_single_star, g.ecl_lat,
                    d.r_med_geo, d.r_lo_geo, d.r_hi_geo
@@ -115,7 +127,12 @@ def main() -> None:
     g = df["phot_g_mean_mag"].fillna(df["sy_gaiamag"])
     df["sigma_fov_mas"] = sigma_fov_mas(g.to_numpy())
     df["n_fov_dr4_est"] = np.round(df["astrometric_matched_transits"] * DR4_MONTHS / DR3_MONTHS * 0.9)
-    df["epoch_rv_expected"] = df["grvs_mag"] <= 14
+    # DR4 computes epoch RVs for G_RVS <= 14 (data model, rvs_epoch_parameters_single).
+    # Use DR3 grvs_mag where published, else estimate from G and G_RP.
+    est = grvs_from_g_rp(df["phot_g_mean_mag"], df["phot_rp_mean_mag"])
+    df["grvs_best"] = df["grvs_mag"].fillna(pd.Series(est, index=df.index)).round(3)
+    df["grvs_estimated"] = df["grvs_mag"].isna() & df["grvs_best"].notna()
+    df["epoch_rv_expected"] = df["grvs_best"] <= 14
 
     for mc in COMPANION_MJ:
         for a in COMPANION_AU:
@@ -129,7 +146,8 @@ def main() -> None:
     keep = ["pl_name", "hostname", "source_id", "ra", "dec", "pl_bmassj", "pl_bmassprov",
             "pl_radj", "pl_orbper", "pl_orbsmax", "st_mass", "mstar_msun", "mstar_assumed",
             "st_teff", "sy_snum", "sy_pnum", "dist_pc", "r_lo_geo", "r_hi_geo", "parallax",
-            "parallax_error", "phot_g_mean_mag", "grvs_mag", "rv_nb_transits",
+            "parallax_error", "phot_g_mean_mag", "phot_rp_mean_mag", "grvs_mag", "grvs_best",
+            "grvs_estimated", "rv_nb_transits",
             "epoch_rv_expected", "ruwe", "astrometric_excess_noise",
             "astrometric_excess_noise_sig", "non_single_star", "astrometric_matched_transits",
             "n_fov_dr4_est", "sigma_fov_mas"]

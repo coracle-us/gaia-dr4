@@ -91,7 +91,8 @@ file. Use them to rank targets by expected S/N.
 6. Decide the question (A/B/C) and write it down here.
 
 ### Phase 1 — Build and validate (Nov)
-1. Model: 5-parameter single-star astrometry + Keplerian orbit (photocenter), using the
+1. Model: 6-parameter single-star astrometry (5 astrometric + pseudo-colour, as in the
+   DR4 core solution) + Keplerian orbit (photocenter), using the
    along-scan 1-D formulation Gaia actually measures. Linear Thiele–Innes parameters +
    nonlinear (P, e, T_p) search; periodogram over P ≤ ~4 yr (≤ the DR4 baseline).
 2. Use ESA's single-star fitting package (`gaiasupdate`, already released); our orbital

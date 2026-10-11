@@ -1,0 +1,20 @@
+hostname,companion,mass_mj,mass_type,period_d,a_au,ref,note
+HAT-P-13,c,14.6,msini,445.8,,Knutson+2014 arXiv:1312.2954,plus RV trend
+WASP-8,c,26.1,true,4323,,Xiao+2026 arXiv:2609.01377,msini 9.45 (Knutson+2014); true mass from RV+HG
+HAT-P-2,c,10.7,true,8500,,de Beurs+2023 arXiv:2309.03256,RV+HG
+HD 118203,c,11.79,true,,6.28,Zhang+2024 arXiv:2407.21377,mutual inclination ~10 deg
+HAT-P-17,c,3.4,msini,,5.6,Ranshaw+2026 arXiv:2609.09077 (compilation),
+WASP-41,c,3.18,msini,421,,Neveu-VanMalle+2016 arXiv:1509.07750,
+WASP-47,c,1.24,msini,572,,Neveu-VanMalle+2016 arXiv:1509.07750,
+Kepler-424,c,7.0,msini,223,,Endl+2014 arXiv:1409.8156,
+KELT-6,c,3.71,msini,,2.39,Ranshaw+2026 arXiv:2609.09077 (compilation),
+HAT-P-44,c,4.0,msini,,1.75,Ranshaw+2026 arXiv:2609.09077 (compilation),
+WASP-132,d,5.16,msini,,2.71,Ranshaw+2026 arXiv:2609.09077 (compilation),
+HATS-59,c,12.7,msini,,2.50,Ranshaw+2026 arXiv:2609.09077 (compilation),
+WASP-53,c,17.9,true,2862,,Xiao+2026 arXiv:2609.01377,brown dwarf; msini >16 (Triaud+2017)
+WASP-81,c,57,msini,1297,,Triaud+2017 arXiv:1612.04166,brown dwarf; 64 MJ true in Xiao+2026
+K2-232,c,5.3,msini,1950,,Ranshaw+2026 arXiv:2609.09077,published DR4 forecast: ~75% detection
+TOI-2158,c,1.62,msini,414.5,,Knudstrup+2026 arXiv:2609.30915,plus RV trend
+Kepler-419,c,7.3,true,,1.68,Dawson+2014 arXiv:1405.5229,photodynamical; mutual inclination 9 deg
+TOI-2537,c,8.9,true,1886,,Xiao+2026 arXiv:2609.01377,
+KELT-20,B,34,true,,,Yang+2026 arXiv:2606.02705,HG acceleration + TTV; orbit poorly constrained

@@ -92,15 +92,17 @@ Verified on arXiv abstract pages 2026-10-11 unless marked.
    - Result: 29 outer-companion candidates in known transiting and RV systems.
    - They are explicitly flagged as priority targets "for joint orbit analysis once Gaia DR4 data are available".
    - The Octofitter team will be fitting DR4 epoch data for these systems.
+   - *Update (literature review, same day):* none of the 29 is a transiting **giant**-planet host. The transiting hosts in the list (ν² Lup, LHS 1903, HD 63433, HD 96735) all have small planets, so the direct overlap with our sample is low.
 3. **Thompson, Blakely, Xuan et al.**, G23H catalogue paper, arXiv:2602.00235 (Jan 2026): independent astrometric support for 94 of 120 Jovian systems from the NASA Exoplanet Archive.
 4. **Ranshaw, Wang, Burt, … S. Wang**, "The Discovery of K2-232c…", arXiv:2609.09077 (Sep 2026).
    - Outer companions are more eccentric in hot-Jupiter systems than in warm-Jupiter systems.
-   - A DR4 detection forecast was mentioned in a search snippet. *Not verified in the abstract; check the PDF.*
+   - **Verified in the full text:** a Fisher-matrix forecast of DR4 astrometry plus RVs gives a ~75% chance of detecting K2-232 c and measuring the mutual inclination. K2-232 is in our target list.
 5. **Shariat, El-Badry, S. Wang et al.**, "Stellar companions sculpt hot Jupiter formation…", arXiv:2609.19249 (Sep 2026): resolved stellar companions to 147 hot Jupiters. **Useful for our known-stellar-companion and impostor list.**
 6. **Yang, Lu, Yahalomi & Winn**, arXiv:2606.02705 (Jun 2026): a roughly 34 M_J companion to KELT-20, from acceleration plus TTVs.
 7. **Lammers & Winn**, arXiv:2511.04673: DR4 yield forecast. Mock catalogues are at `CalebLammers/GaiaForecasts`.
-8. **GEODES I**, Van Zandt, Bowler, Petigura et al., arXiv:2605.23018: a vetting and validation campaign for Gaia giant-planet candidates. Not focused on transiting hosts.
-9. **Not verified** (search snippets only):
+8. **Espinoza-Retamal, Zhu & Petrovich 2023**, AJ 166, 231, arXiv:2309.08665: a forecast of exactly our experiment for TESS hosts, with about 206 cold-Jupiter detections, about 118 of them with measured inclination. Prior work to cite, not a competitor. See `literature.md`.
+9. **GEODES I**, Van Zandt, Bowler, Petigura et al., arXiv:2605.23018: a vetting and validation campaign for Gaia giant-planet candidates. Not focused on transiting hosts.
+10. **Not verified** (search snippets only):
    - a NExScI 2026 poster (Mazziotti) arguing the DPAC exoplanet catalogue may be conservative because of a RUWE < 1.4 cut;
    - Sozzetti ExoPAG slides on DR4 exoplanet deliverables;
    - an Astrobites post (5 Oct 2026) on vetting DR4 planets.

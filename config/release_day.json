@@ -27,5 +27,12 @@
     "max_sep_deg": 3.0,
     "max_dg": 0.5,
     "max_ruwe": 1.1
-  }
+  },
+  "rv_retrieval_type": "EPOCH_PARAMETERS_RVS_SINGLE",
+  "dpac_tables": [
+    "gaiadr4.nss_two_body_orbit",
+    "gaiadr4.nss_acceleration_astro",
+    "gaiadr4.nss_multiple_orbits",
+    "gaiadr4.nss_masses"
+  ]
 }

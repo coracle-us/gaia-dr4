@@ -45,3 +45,29 @@ def test_run_summary_written(dryrun):
     summary = json.loads((dryrun / "run_summary.json").read_text())
     assert summary["n_hosts"] == 8 and summary["source"] == "simulate"
     assert "git_commit" in summary and "thresholds" in summary
+
+
+def test_cache_mode_runs_on_raw_downloads_with_dpac_vetting(tmp_path):
+    """Offline release-day run from raw DataLink zips (stub archive) + a DPAC table."""
+    try:
+        from companions.scanlaw import ScanLaw
+        sl = ScanLaw.load()
+    except FileNotFoundError:
+        pytest.skip("gaiascanlaw data not downloaded")
+    import release_day
+    from companions.archive import DataLinkSource
+    from test_archive import StubGaia
+    hosts = release_day.build_hosts().head(3)
+    ids = hosts["source_id"].astype(int).tolist()
+    raw = tmp_path / "raw"
+    DataLinkSource("Gaia DR4", raw / "epoch_astrometry", batch_size=10, retries=1, backoff_s=0,
+                   client=StubGaia(sl)).fetch(ids)
+    (raw / "dpac").mkdir(parents=True)
+    pd.DataFrame(dict(source_id=[ids[0]], nss_solution_type=["Orbital"], period=[700.0])).to_csv(
+        raw / "dpac" / "gaiadr4.nss_two_body_orbit.csv", index=False)
+    out = tmp_path / "out"
+    release_day.main(["--source", "cache", "--limit", "3", "--procs", "2", "--no-posterior",
+                      "--raw-dir", str(raw), "--out", str(out)])
+    df = pd.read_csv(out / "results.csv").set_index("source_id")
+    assert (df.status == "fitted").all()
+    assert df.loc[ids[0], "dpac_solutions"] == "Orbital"

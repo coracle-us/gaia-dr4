@@ -12,6 +12,8 @@ Steps
  2. Epoch astrometry: DataLink (config/release_day.json; raw zips kept in data/raw/dr4/),
     the local zip cache, or simulated DR4 data (data/sim/, optional injected planets).
  3. companions.cascade.run_cascade per host, in parallel; posterior for orbit detections.
+    DataLink/cache runs also cross-match DPAC NSS tables (TAP) and test Gaia epoch-RV
+    constancy after removing the transiting planet (companions.vetting).
  4. results.csv (all hosts: detections, accelerations, upper limits, flags), injections.csv
     (simulate only), run_summary.json (counts, thresholds, config, git commit, timings).
 Source ids: DR4 ids are assumed equal to DR3 ids ("dr4_source_id": "same_as_dr3"); if DR4
@@ -52,7 +54,7 @@ def build_hosts() -> pd.DataFrame:
     tg = pd.read_csv(ROOT / "data/targets.csv", dtype={"source_id": "Int64"})
     tg = tg.dropna(subset=["source_id", "ra", "dec", "phot_g_mean_mag", "dist_pc"])
     tg = tg.sort_values("pl_orbper").drop_duplicates("hostname")          # innermost giant
-    inner = load_inner_inclinations()[["pl_name", "pl_orbincl"]]
+    inner = load_inner_inclinations()[["pl_name", "pl_orbincl", "pl_tranmid", "pl_rvamp"]]
     tg = tg.merge(inner, on="pl_name", how="left")
     sens = pd.read_csv(ROOT / "results/target_sensitivity.csv", dtype={"source_id": "Int64"})
     lim_cols = [c for c in sens.columns if c.startswith(("m50_", "m90_"))]
@@ -91,6 +93,50 @@ def choose_injections(hosts: pd.DataFrame, n: int, factor: float, rng) -> dict:
     return inj
 
 
+def dpac_and_rv_vetting(hosts: pd.DataFrame, cfg: dict, source: str, raw_root: Path) -> pd.DataFrame:
+    """DPAC NSS matches (TAP) and Gaia epoch-RV constancy (DataLink) for every host.
+    Failures are logged and leave the columns empty rather than stopping the run."""
+    from companions.vetting import epoch_rv_vetting, summarize_dpac
+    ids = hosts["dr4_source_id"].astype(int).tolist()
+    out = pd.DataFrame(dict(source_id=ids))
+    dpac_dir = raw_root / "dpac"
+    try:
+        tables = {}
+        for table in cfg.get("dpac_tables", []):
+            path = dpac_dir / f"{table}.csv"
+            if not path.exists() and source == "datalink":
+                from astroquery.gaia import Gaia
+                parts = []
+                for i in range(0, len(ids), 500):
+                    id_list = ",".join(str(s) for s in ids[i:i + 500])
+                    parts.append(Gaia.launch_job(f"select * from {table} where source_id in "
+                                                 f"({id_list})").get_results().to_pandas())
+                dpac_dir.mkdir(parents=True, exist_ok=True)
+                pd.concat(parts).to_csv(path, index=False)
+            if path.exists():
+                tables[table] = pd.read_csv(path)
+        out = out.merge(summarize_dpac(tables, ids), on="source_id", how="left")
+    except Exception as err:
+        print(f"WARNING: DPAC NSS cross-match failed: {err}")
+    try:
+        rv_hosts = hosts[hosts["epoch_rv_expected"].astype(bool)]
+        rv_ids = rv_hosts["dr4_source_id"].astype(int).tolist()
+        raw = raw_root / "epoch_rv"
+        if source == "datalink":
+            from companions.archive import DataLinkSource
+            rv_tables = DataLinkSource(cfg["data_release"], raw, retrieval_type=cfg["rv_retrieval_type"],
+                                       data_structure=cfg["data_structure"], batch_size=cfg["batch_size"],
+                                       retries=cfg["retries"], backoff_s=cfg["backoff_s"]).fetch(rv_ids)
+        else:
+            from companions.archive import ZipCacheSource
+            rv_tables = ZipCacheSource(raw).fetch(rv_ids)
+        vet = epoch_rv_vetting(rv_tables, rv_hosts.assign(source_id=rv_hosts["dr4_source_id"]))
+        out = out.merge(vet, on="source_id", how="left")
+    except Exception as err:
+        print(f"WARNING: epoch-RV vetting failed: {err}")
+    return out
+
+
 def _worker(args):
     from companions.cascade import HostInfo, Thresholds, run_cascade
     from companions.epoch import EpochData
@@ -126,6 +172,8 @@ def main(argv=None) -> None:
     ap.add_argument("--procs", type=int, default=None)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--no-posterior", action="store_true")
+    ap.add_argument("--raw-dir", type=Path, default=ROOT / "data/raw/dr4",
+                    help="root of raw DR4 downloads (epoch_astrometry/, epoch_rv/, dpac/)")
     args = ap.parse_args(argv)
     cfg = json.loads(args.config.read_text())
     t0 = time.time()
@@ -144,13 +192,13 @@ def main(argv=None) -> None:
     injections, model = {}, cfg["model"]
     if args.source == "datalink":
         from companions.archive import DataLinkSource
-        src = DataLinkSource(cfg["data_release"], ROOT / "data/raw/dr4/epoch_astrometry",
+        src = DataLinkSource(cfg["data_release"], args.raw_dir / "epoch_astrometry",
                              retrieval_type=cfg["retrieval_type"], data_structure=cfg["data_structure"],
                              batch_size=cfg["batch_size"], retries=cfg["retries"],
                              backoff_s=cfg["backoff_s"])
     elif args.source == "cache":
         from companions.archive import ZipCacheSource
-        src = ZipCacheSource(ROOT / "data/raw/dr4/epoch_astrometry")
+        src = ZipCacheSource(args.raw_dir / "epoch_astrometry")
     else:
         from companions.archive import SimulatedSource
         from companions.scanlaw import ScanLaw
@@ -183,6 +231,9 @@ def main(argv=None) -> None:
     t_fit = time.time() - t_fit
 
     res = pd.DataFrame(rows)
+    if args.source in ("datalink", "cache"):
+        res = res.merge(dpac_and_rv_vetting(hosts, cfg, args.source, args.raw_dir),
+                        on="source_id", how="left")
     keep = ["hostname", "source_id", "phot_g_mean_mag", "dist_pc", "st_mass", "pl_name", "pl_orbper",
             "pl_orbincl", "lit_rv_followup", "ruwe", "prior_evidence"] + \
            [c for c in hosts.columns if c.startswith(("m50_", "m90_"))]

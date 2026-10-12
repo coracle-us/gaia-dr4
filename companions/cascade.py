@@ -112,21 +112,25 @@ def min_mutual_inclination_deg(inc_deg, inner_inc_deg):
     return float(min(abs(inc_deg - inner_inc_deg), abs(inc_deg - (180 - inner_inc_deg))))
 
 
-def stability_check(ep, period, dlnl2, model) -> bool:
+def stability_check(ep, period, dlnl2, model, search_kw=None) -> bool:
     t_transit = np.array([ep.t[ep.transit == k].mean() for k in range(ep.transit.max() + 1)])
     edges = np.quantile(t_transit, np.linspace(0, 1, N_STABILITY_BLOCKS + 1))
     block = np.clip(np.searchsorted(edges, t_transit, side="right") - 1, 0, N_STABILITY_BLOCKS - 1)
     for b in range(N_STABILITY_BLOCKS):
         sub = subset_epochs(ep, block[ep.transit] != b)
-        r = search_orbit_ml(sub, model=model)
+        r = search_orbit_ml(sub, model=model, **(search_kw or {}))
         if abs(r.period / period - 1) > 0.1 or r.dlnl2 < 0.5 * dlnl2:
             return False
     return True
 
 
 def run_cascade(ep, host: HostInfo, thr: Thresholds, model="6p", rv=None,
-                do_stability=True, do_posterior=False, posterior_kw=None) -> CascadeResult:
-    orb = search_orbit_ml(ep, model=model)
+                do_stability=True, do_posterior=False, posterior_kw=None,
+                search_kw=None) -> CascadeResult:
+    """search_kw: period-grid options for search_orbit_ml (e.g. p_min, p_max for a named target
+    whose period is known from photometry). A narrower grid has fewer trials, so the calibrated
+    thresholds are conservative for it."""
+    orb = search_orbit_ml(ep, model=model, **(search_kw or {}))
     a7 = fit_acceleration_ml(ep, order=7, model=model)
     a9 = fit_acceleration_ml(ep, order=9, model=model)
     orb_sig = orb.dlnl2 > thr.orbit
@@ -162,7 +166,7 @@ def run_cascade(ep, host: HostInfo, thr: Thresholds, model="6p", rv=None,
         if orb.dlnl2 < 1.25 * thr.orbit:
             res.flags.append("marginal")
         if do_stability:
-            res.stable = stability_check(ep, orb.period, orb.dlnl2, model)
+            res.stable = stability_check(ep, orb.period, orb.dlnl2, model, search_kw)
             res.flags.append("stability_confirmed" if res.stable else "stability_not_confirmed")
         if do_posterior:
             from companions.posterior import sample_orbit_campbell

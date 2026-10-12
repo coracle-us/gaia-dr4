@@ -25,7 +25,7 @@ def dryrun(tmp_path_factory):
 
 def test_results_table_has_every_host(dryrun):
     df = pd.read_csv(dryrun / "results.csv")
-    assert len(df) == 8
+    assert len(df) == 8 + 2                       # 8 archive hosts + 2 named extra targets
     for col in ("hostname", "source_id", "classification", "dlnl2_orbit", "flags",
                 "m50_mj_P3", "status"):
         assert col in df.columns
@@ -43,7 +43,7 @@ def test_injected_planets_are_recovered(dryrun):
 
 def test_run_summary_written(dryrun):
     summary = json.loads((dryrun / "run_summary.json").read_text())
-    assert summary["n_hosts"] == 8 and summary["source"] == "simulate"
+    assert summary["n_hosts"] == 10 and summary["source"] == "simulate"
     assert "git_commit" in summary and "thresholds" in summary
 
 
@@ -69,5 +69,20 @@ def test_cache_mode_runs_on_raw_downloads_with_dpac_vetting(tmp_path):
     release_day.main(["--source", "cache", "--limit", "3", "--procs", "2", "--no-posterior",
                       "--raw-dir", str(raw), "--out", str(out)])
     df = pd.read_csv(out / "results.csv").set_index("source_id")
-    assert (df.status == "fitted").all()
+    assert (df.loc[ids, "status"] == "fitted").all()
+    # named extra targets were never downloaded by the stub archive
+    assert (df[~df.index.isin(ids)].status == "no epoch data").all()
     assert df.loc[ids[0], "dpac_solutions"] == "Orbital"
+
+
+def test_named_extra_targets_always_included_with_period_windows():
+    import release_day
+    hosts = release_day.build_hosts(limit=3)
+    names = set(hosts.hostname)
+    assert {"TIC 147035057", "TIC 159614322"} <= names
+    assert len(hosts) == 5
+    row = hosts.set_index("hostname").loc["TIC 147035057"]
+    assert 0.09 < row.p_min_yr < 0.1022 < row.p_max_yr < 0.11
+    assert row.rv_known_period_d == pytest.approx(37.31497)
+    assert release_day.search_kw_for(row) == dict(p_min=row.p_min_yr, p_max=row.p_max_yr)
+    assert release_day.search_kw_for(hosts.set_index("hostname").loc["TIC 159614322"]) == {}

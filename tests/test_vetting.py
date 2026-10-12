@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 import pandas as pd
 from astropy.table import Table
 
@@ -35,3 +36,20 @@ def test_epoch_rv_vetting_flags_variable_host_after_inner_planet_removal():
     assert out.loc[10, "gaia_rv_pvalue"] > 1e-3 and not out.loc[10, "gaia_rv_variable"]
     assert out.loc[20, "gaia_rv_pvalue"] < 1e-6 and out.loc[20, "gaia_rv_variable"]
     assert np.isnan(out.loc[30, "gaia_rv_pvalue"])
+
+
+def test_known_period_rv_test_detects_orbit_at_that_period():
+    from companions.gaia_rv import rvdata_from_gaia_epoch
+    from companions.vetting import rv_known_period_test
+    rng = np.random.default_rng(3)
+    t = np.sort(rng.uniform(1800, 3800, 30))
+    p_d = 37.315
+    rv_kms = -42 + 25 * np.sin(2 * np.pi * t / p_d + 0.4) + 1.0 * rng.standard_normal(30)
+    tab = Table({"source_id": np.full(30, 5), "obs_time_rv": t, "radial_velocity": rv_kms,
+                 "radial_velocity_error": np.full(30, 1.0), "rv_validity_flag": np.ones(30, bool)})
+    res = rv_known_period_test(rvdata_from_gaia_epoch(tab, 5), p_d)
+    assert res["k_ms"] / 1000 == pytest.approx(25, rel=0.1)
+    assert res["dchi2"] > 100
+    flat = Table({"source_id": np.full(30, 6), "obs_time_rv": t, "radial_velocity": -42 + rng.standard_normal(30),
+                  "radial_velocity_error": np.full(30, 1.0), "rv_validity_flag": np.ones(30, bool)})
+    assert rv_known_period_test(rvdata_from_gaia_epoch(flat, 6), p_d)["dchi2"] < 15

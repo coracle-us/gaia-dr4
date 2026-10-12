@@ -50,7 +50,12 @@ def load_inner_inclinations() -> pd.DataFrame:
     return pd.read_csv(path)
 
 
-def build_hosts() -> pd.DataFrame:
+EXTRA_TARGETS = ROOT / "data/extra_targets.csv"
+
+
+def build_hosts(limit: int | None = None) -> pd.DataFrame:
+    """Archive hosts (first `limit` if given) plus the named targets in data/extra_targets.csv,
+    which are always included (columns p_min_yr / p_max_yr / rv_known_period_d / note)."""
     tg = pd.read_csv(ROOT / "data/targets.csv", dtype={"source_id": "Int64"})
     tg = tg.dropna(subset=["source_id", "ra", "dec", "phot_g_mean_mag", "dist_pc"])
     tg = tg.sort_values("pl_orbper").drop_duplicates("hostname")          # innermost giant
@@ -65,7 +70,26 @@ def build_hosts() -> pd.DataFrame:
     tg = tg.merge(prior, on="hostname", how="left")
     tg["lit_rv_followup"] = tg["lit_rv_followup"].astype("boolean").fillna(False).astype(bool)
     tg["prior_evidence"] = tg["prior_evidence"].fillna("")
+    if limit:
+        tg = tg.head(limit)
+    if EXTRA_TARGETS.exists():
+        ex = pd.read_csv(EXTRA_TARGETS, dtype={"source_id": "Int64"})
+        ex = ex[~ex.source_id.isin(tg.source_id)]
+        ex["prior_evidence"] = ""
+        tg = pd.concat([tg, ex], ignore_index=True)
+    for col, fill in (("note", ""), ("p_min_yr", np.nan), ("p_max_yr", np.nan),
+                      ("rv_known_period_d", np.nan)):
+        tg[col] = tg[col].fillna(fill) if col in tg else fill
+    tg["lit_rv_followup"] = tg["lit_rv_followup"].astype(bool)
+    tg["epoch_rv_expected"] = tg["epoch_rv_expected"].astype(bool)
     return tg.reset_index(drop=True)
+
+
+def search_kw_for(host) -> dict:
+    """Per-host period window for named targets with a photometric period."""
+    if np.isfinite(host.get("p_min_yr", np.nan)) and np.isfinite(host.get("p_max_yr", np.nan)):
+        return dict(p_min=float(host["p_min_yr"]), p_max=float(host["p_max_yr"]))
+    return {}
 
 
 def map_source_ids(hosts: pd.DataFrame, mode: str) -> pd.Series:
@@ -140,11 +164,11 @@ def dpac_and_rv_vetting(hosts: pd.DataFrame, cfg: dict, source: str, raw_root: P
 def _worker(args):
     from companions.cascade import HostInfo, Thresholds, run_cascade
     from companions.epoch import EpochData
-    sid, table, host, thr, model, do_post, post_kw = args
+    sid, table, host, thr, model, do_post, post_kw, search_kw = args
     try:
         ep = EpochData.from_table(table, sid)
         res = run_cascade(ep, HostInfo(**host), Thresholds(**thr), model=model,
-                          do_posterior=do_post, posterior_kw=post_kw)
+                          do_posterior=do_post, posterior_kw=post_kw, search_kw=search_kw)
         row = res.row()
         row.update(status="fitted", n_obs=len(ep.w), n_transit=int(ep.transit.max() + 1))
     except Exception as err:                          # one bad host must not stop the run
@@ -182,9 +206,7 @@ def main(argv=None) -> None:
     from companions.cascade import Thresholds
     thr = Thresholds.from_csv(ROOT / cfg.get("thresholds_file", "results/thresholds.csv"),
                               fap=cfg["fap_per_star"])
-    hosts = build_hosts()
-    if args.limit:
-        hosts = hosts.head(args.limit).copy()
+    hosts = build_hosts(limit=args.limit)
     hosts["dr4_source_id"] = map_source_ids(hosts, cfg["dr4_source_id"]).to_numpy()
     ids = hosts["dr4_source_id"].tolist()
     args.out.mkdir(parents=True, exist_ok=True)
@@ -223,7 +245,7 @@ def main(argv=None) -> None:
                     ruwe=float(h["ruwe"]) if np.isfinite(h["ruwe"]) else np.nan,
                     prior_flags=str(h["prior_evidence"]))
         jobs.append((sid, tables[sid], host, thr.__dict__, model, not args.no_posterior,
-                     cfg["posterior"]))
+                     cfg["posterior"], search_kw_for(h)))
     t_fit = time.time()
     procs = args.procs or cfg["procs"]
     with Pool(procs) as pool:
@@ -235,7 +257,7 @@ def main(argv=None) -> None:
         res = res.merge(dpac_and_rv_vetting(hosts, cfg, args.source, args.raw_dir),
                         on="source_id", how="left")
     keep = ["hostname", "source_id", "phot_g_mean_mag", "dist_pc", "st_mass", "pl_name", "pl_orbper",
-            "pl_orbincl", "lit_rv_followup", "ruwe", "prior_evidence"] + \
+            "pl_orbincl", "lit_rv_followup", "ruwe", "prior_evidence", "note", "rv_known_period_d"] + \
            [c for c in hosts.columns if c.startswith(("m50_", "m90_"))]
     base = hosts.assign(source_id=hosts["dr4_source_id"])[keep]
     out = base.merge(res.drop(columns=["hostname"]), on="source_id", how="left")

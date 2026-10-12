@@ -54,6 +54,19 @@ Check the following on the DR4 archive pages and the DR4 documentation, then edi
 - Expect an orbit with P ≈ 570–580 d and M ≈ 11 M_J.
 - Compare against `results/gaia4_validation.csv`.
 
+## Named targets
+
+`data/extra_targets.csv` lists targets that are always run, even if they are not in the planet archive. Columns:
+- `p_min_yr` / `p_max_yr`: an optional per-target period window;
+- `rv_known_period_d`: a period known from photometry, used to fit Gaia epoch RVs at that period;
+- `note`.
+
+Current entries:
+- **TIC 147035057:** the expected 37.3-d photocentre orbit, plus the RV fit at the eclipse period. This settles single star vs SB2.
+- **TIC 159614322:** excludes stellar-mass companions at 90 / 180 d.
+
+Add rows for collaborators' targets: Gaia DR3 id, RA/Dec, G, distance and stellar mass are needed.
+
 ## Release day: main run
 
 1. **Fetch and fit every host.**

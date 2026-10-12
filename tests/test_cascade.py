@@ -87,3 +87,15 @@ def test_mass_regime_flags(scanlaw):
     res = run_cascade(ep, _host(), THR, model="5p", do_stability=False)
     assert res.classification == "orbit" and res.mass_mj > 80
     assert "stellar_mass" in res.flags
+
+
+def test_per_host_period_range_finds_short_known_period(scanlaw):
+    """TIC 147035057-like case: P = 37.3 d sits at the default 0.1-yr grid edge; a per-host range
+    around the known eclipse period must find it."""
+    p_yr = 37.315 / 365.25
+    orbit = dict(period=p_yr, e=0.05, tp=0.01, a0=0.5, inc=np.deg2rad(88.0), omega=0.3, big_omega=1.0)
+    ep = simulate_epochs(scanlaw, 104.27, -16.48, 8.8, STAR, np.random.default_rng(16), orbit=orbit)
+    res = run_cascade(ep, _host(), THR, model="5p", do_stability=False,
+                      search_kw=dict(p_min=0.95 * p_yr, p_max=1.05 * p_yr))
+    assert res.classification == "orbit"
+    assert res.period == pytest.approx(p_yr, rel=0.01)

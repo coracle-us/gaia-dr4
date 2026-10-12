@@ -66,6 +66,7 @@ The RV limits assume the DR3 per-epoch precision and twice the DR3 number of epo
 2. **An RV signal at 89.965 or 179.930 d** with K ≳ 1 km/s would mean a brown dwarf or low-mass star.
 3. **An astrometric orbit** would mean a companion of ≳ 0.1 M☉ at 90 d (≳ 67 M_J at 180 d). DR3's RV stability already makes a ~0.15 M☉ companion unlikely (K1 ≈ 5–6 km/s against 1.44 km/s scatter).
 4. **Our expectation: a null result in both astrometry and RVs.** The photometric transit predicted for 2026-12-28 06:42 UTC (±45 min) remains the decisive test of the period.
+   - *Erratum, 2026-10-12, still before DR4:* the source time omitted the 1.2-min barycentric light-travel correction. The transit is BJD_TDB 2461402.7800, i.e. geocentric UTC 2026-12-28 06:41 (±45 min); this conversion was recomputed independently here with astropy. The prediction is otherwise unchanged.
 
 ## Addendum, 2026-10-12 (same day, still before DR4): TIC 147035057
 

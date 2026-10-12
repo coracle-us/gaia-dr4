@@ -16,12 +16,17 @@ Steps
     constancy after removing the transiting planet (companions.vetting).
  4. results.csv (all hosts: detections, accelerations, upper limits, flags), injections.csv
     (simulate only), run_summary.json (counts, thresholds, config, git commit, timings).
+ 5. Live status while running: status.json (stage, counts), hosts.csv, progress.jsonl (one row
+    per host as it finishes), diagnostics/<source_id>.json (plot data for detections and named
+    targets) and the HTML dashboard dashboard/index.html (companions.dashboard; rebuilt as hosts
+    finish; `python scripts/dashboard.py OUT --watch 60` rebuilds it from another terminal).
 Source ids: DR4 ids are assumed equal to DR3 ids ("dr4_source_id": "same_as_dr3"); if DR4
 publishes a DR3->DR4 crossmatch, add the mapping in `map_source_ids`.
 """
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
 import subprocess
 import time
@@ -72,16 +77,19 @@ def build_hosts(limit: int | None = None) -> pd.DataFrame:
     tg["prior_evidence"] = tg["prior_evidence"].fillna("")
     if limit:
         tg = tg.head(limit)
+    tg["named_target"] = False
     if EXTRA_TARGETS.exists():
         ex = pd.read_csv(EXTRA_TARGETS, dtype={"source_id": "Int64"})
         ex = ex[~ex.source_id.isin(tg.source_id)]
         ex["prior_evidence"] = ""
+        ex["named_target"] = True
         tg = pd.concat([tg, ex], ignore_index=True)
     for col, fill in (("note", ""), ("p_min_yr", np.nan), ("p_max_yr", np.nan),
                       ("rv_known_period_d", np.nan)):
         tg[col] = tg[col].fillna(fill) if col in tg else fill
     tg["lit_rv_followup"] = tg["lit_rv_followup"].astype(bool)
     tg["epoch_rv_expected"] = tg["epoch_rv_expected"].astype(bool)
+    tg["named_target"] = tg["named_target"].astype(bool)
     return tg.reset_index(drop=True)
 
 
@@ -164,11 +172,14 @@ def dpac_and_rv_vetting(hosts: pd.DataFrame, cfg: dict, source: str, raw_root: P
 def _worker(args):
     from companions.cascade import HostInfo, Thresholds, run_cascade
     from companions.epoch import EpochData
-    sid, table, host, thr, model, do_post, post_kw, search_kw = args
+    sid, table, host, thr, model, do_post, post_kw, search_kw, diag_dir, named = args
     try:
         ep = EpochData.from_table(table, sid)
         res = run_cascade(ep, HostInfo(**host), Thresholds(**thr), model=model,
-                          do_posterior=do_post, posterior_kw=post_kw, search_kw=search_kw)
+                          do_posterior=do_post, posterior_kw=post_kw, search_kw=search_kw,
+                          diagnostics=True if named else None)
+        if res.diagnostics:
+            (Path(diag_dir) / f"{sid}.json").write_text(json.dumps(res.diagnostics))
         row = res.row()
         row.update(status="fitted", n_obs=len(ep.w), n_transit=int(ep.transit.max() + 1))
     except Exception as err:                          # one bad host must not stop the run
@@ -183,6 +194,39 @@ def git_commit() -> str:
                               text=True, check=True).stdout.strip()
     except Exception:
         return "unknown"
+
+
+def _jsonable(row: dict) -> dict:
+    out = {}
+    for k, v in row.items():
+        if isinstance(v, (np.floating, float)):
+            v = float(v) if np.isfinite(v) else None
+        elif isinstance(v, np.integer):
+            v = int(v)
+        elif isinstance(v, np.bool_):
+            v = bool(v)
+        out[k] = v
+    return out
+
+
+class RunStatus:
+    """status.json + dashboard refresh (at most once a minute unless forced). A dashboard
+    failure is reported, never fatal."""
+
+    def __init__(self, out: Path, **fields):
+        self.out, self._last_build = out, 0.0
+        self.state = dict(started=dt.datetime.now().isoformat(timespec="seconds"), **fields)
+
+    def update(self, build=False, **fields):
+        self.state.update(fields, updated=dt.datetime.now().isoformat(timespec="seconds"))
+        (self.out / "status.json").write_text(json.dumps(self.state, indent=1, default=str))
+        if build or time.time() - self._last_build > 60:
+            self._last_build = time.time()
+            try:
+                from companions.dashboard import build_dashboard
+                build_dashboard(self.out)
+            except Exception as err:
+                print(f"WARNING: dashboard not rebuilt: {err}")
 
 
 def main(argv=None) -> None:
@@ -210,6 +254,19 @@ def main(argv=None) -> None:
     hosts["dr4_source_id"] = map_source_ids(hosts, cfg["dr4_source_id"]).to_numpy()
     ids = hosts["dr4_source_id"].tolist()
     args.out.mkdir(parents=True, exist_ok=True)
+    keep = ["hostname", "source_id", "phot_g_mean_mag", "dist_pc", "st_mass", "pl_name", "pl_orbper",
+            "pl_orbincl", "lit_rv_followup", "ruwe", "prior_evidence", "note", "rv_known_period_d",
+            "named_target"] + [c for c in hosts.columns if c.startswith(("m50_", "m90_"))]
+    base = hosts.assign(source_id=hosts["dr4_source_id"])[keep]
+    base.to_csv(args.out / "hosts.csv", index=False, float_format="%.6g")
+    diag_dir = args.out / "diagnostics"
+    diag_dir.mkdir(exist_ok=True)
+    for old in diag_dir.glob("*.json"):              # derived plot data from an earlier run here
+        old.unlink()
+    progress = args.out / "progress.jsonl"
+    progress.write_text("")
+    status = RunStatus(args.out, source=args.source, n_hosts=len(hosts), git_commit=git_commit(),
+                       thresholds=thr.__dict__)
 
     injections, model = {}, cfg["model"]
     if args.source == "datalink":
@@ -230,6 +287,8 @@ def main(argv=None) -> None:
         src = SimulatedSource(ScanLaw.load(), sim_hosts, args.out / "sim_epochs",
                               injections=injections, seed=args.seed)
         model = "5p"                                  # simulated data carry no colour term
+    status.update(build=True, stage="fetch",
+                  fetch_manifest=str(src.manifest_path) if args.source == "datalink" else None)
     t_fetch = time.time()
     tables = src.fetch(ids)
     t_fetch = time.time() - t_fetch
@@ -245,21 +304,25 @@ def main(argv=None) -> None:
                     ruwe=float(h["ruwe"]) if np.isfinite(h["ruwe"]) else np.nan,
                     prior_flags=str(h["prior_evidence"]))
         jobs.append((sid, tables[sid], host, thr.__dict__, model, not args.no_posterior,
-                     cfg["posterior"], search_kw_for(h)))
+                     cfg["posterior"], search_kw_for(h), str(diag_dir), bool(h["named_target"])))
+    status.update(build=True, stage="fit", n_jobs=len(jobs), n_done=0, n_fetched=len(tables),
+                  fit_started=dt.datetime.now().isoformat(timespec="seconds"))
     t_fit = time.time()
     procs = args.procs or cfg["procs"]
-    with Pool(procs) as pool:
-        rows = pool.map(_worker, jobs, chunksize=1)
+    rows = []
+    with Pool(procs) as pool, open(progress, "a", encoding="utf-8") as prog:
+        for row in pool.imap_unordered(_worker, jobs, chunksize=1):
+            rows.append(row)
+            prog.write(json.dumps(_jsonable(row)) + "\n")
+            prog.flush()
+            status.update(n_done=len(rows))
     t_fit = time.time() - t_fit
+    status.update(build=True, stage="vetting")
 
     res = pd.DataFrame(rows)
     if args.source in ("datalink", "cache"):
         res = res.merge(dpac_and_rv_vetting(hosts, cfg, args.source, args.raw_dir),
                         on="source_id", how="left")
-    keep = ["hostname", "source_id", "phot_g_mean_mag", "dist_pc", "st_mass", "pl_name", "pl_orbper",
-            "pl_orbincl", "lit_rv_followup", "ruwe", "prior_evidence", "note", "rv_known_period_d"] + \
-           [c for c in hosts.columns if c.startswith(("m50_", "m90_"))]
-    base = hosts.assign(source_id=hosts["dr4_source_id"])[keep]
     out = base.merge(res.drop(columns=["hostname"]), on="source_id", how="left")
     out["status"] = out["status"].fillna("no epoch data")
     out.to_csv(args.out / "results.csv", index=False, float_format="%.6g")
@@ -277,6 +340,7 @@ def main(argv=None) -> None:
                    git_commit=git_commit(), seconds=dict(fetch=t_fetch, fit=t_fit, total=time.time() - t0),
                    n_injected=len(injections))
     (args.out / "run_summary.json").write_text(json.dumps(summary, indent=1, default=str))
+    status.update(build=True, stage="done", seconds=summary["seconds"])
     print(json.dumps({k: summary[k] for k in ("source", "n_hosts", "n_fitted", "n_missing",
                                               "n_errors", "classifications", "seconds")}, default=str))
     det = out[out.classification.isin(["orbit", "acceleration"])]

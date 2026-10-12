@@ -24,6 +24,7 @@ See `CLAUDE.md` for the briefing, schedule, and rules.
 | Per-host cascade (classification + vetting flags) | `companions/cascade.py` |
 | Calibration (null, injection–recovery, stability, sensitivity) | `scripts/calibrate_null.py`, `injection_recovery.py`, `calibrate_stability.py`, `target_sensitivity.py`, `analyze_calibration.py` |
 | Release day | `scripts/release_day.py`, `scripts/calibrate_null_real.py`, `scripts/make_table.py`, `config/release_day.json` |
+| Run dashboard (progress, candidates with vetting checklist and plots, named targets vs predictions) | `companions/dashboard.py`, `diagnostics.py`, `scripts/dashboard.py` |
 
 Release-day procedure: [`docs/RELEASE_DAY.md`](docs/RELEASE_DAY.md). Validation log:
 [`notes/phase1_validation.md`](notes/phase1_validation.md).

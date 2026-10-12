@@ -88,6 +88,7 @@ class CascadeResult:
     flags: list = field(default_factory=list)
     posterior: dict = field(default_factory=dict)
     joint: dict = field(default_factory=dict)
+    diagnostics: dict = field(default_factory=dict)   # companions.diagnostics; not in row()
 
     def row(self) -> dict:
         return dict(hostname=self.host.hostname, classification=self.classification,
@@ -126,10 +127,11 @@ def stability_check(ep, period, dlnl2, model, search_kw=None) -> bool:
 
 def run_cascade(ep, host: HostInfo, thr: Thresholds, model="6p", rv=None,
                 do_stability=True, do_posterior=False, posterior_kw=None,
-                search_kw=None) -> CascadeResult:
+                search_kw=None, diagnostics: bool | None = None) -> CascadeResult:
     """search_kw: period-grid options for search_orbit_ml (e.g. p_min, p_max for a named target
     whose period is known from photometry). A narrower grid has fewer trials, so the calibrated
-    thresholds are conservative for it."""
+    thresholds are conservative for it. diagnostics: attach plot data (companions.diagnostics);
+    None = only for detections."""
     orb = search_orbit_ml(ep, model=model, **(search_kw or {}))
     a7 = fit_acceleration_ml(ep, order=7, model=model)
     a9 = fit_acceleration_ml(ep, order=9, model=model)
@@ -144,6 +146,9 @@ def run_cascade(ep, host: HostInfo, thr: Thresholds, model="6p", rv=None,
     else:
         cls = "none"
     res = CascadeResult(host, cls, orb.dlnl2, a7.dlnl2, a9.dlnl2, orb.star.s_ccd, orb.star.s_tr)
+    if diagnostics or (diagnostics is None and cls != "none"):
+        from companions.diagnostics import cascade_diagnostics
+        res.diagnostics = cascade_diagnostics(ep, orb, (a7, a9), thr.__dict__)
 
     if cls != "none":
         res.flags.append("twin_excluded_lit_rv" if host.lit_rv_followup else "impostor_not_excluded")

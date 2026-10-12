@@ -111,6 +111,7 @@ class MLOrbitResult:
     s_tr: float
     fit: GLSFit
     star: NoiseFit            # ML single-star fit (its own jitters)
+    grid: GridResult | None = None   # period profile at the single-star ML noise
 
     @property
     def dlnl2(self) -> float:
@@ -138,4 +139,4 @@ def search_orbit_ml(ep, model="6p", n_starts=5, e_max=0.95, **grid_kw) -> MLOrbi
             best = sol
     period, e, tp, s_ccd, s_tr = (float(v) for v in best.x)
     return MLOrbitResult(period, e, tp, s_ccd, s_tr,
-                         orbit_gls(ep, period, e, tp, s_ccd, s_tr, model), star)
+                         orbit_gls(ep, period, e, tp, s_ccd, s_tr, model), star, grid)

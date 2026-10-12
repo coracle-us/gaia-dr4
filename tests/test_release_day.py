@@ -86,3 +86,25 @@ def test_named_extra_targets_always_included_with_period_windows():
     assert row.rv_known_period_d == pytest.approx(37.31497)
     assert release_day.search_kw_for(row) == dict(p_min=row.p_min_yr, p_max=row.p_max_yr)
     assert release_day.search_kw_for(hosts.set_index("hostname").loc["TIC 159614322"]) == {}
+
+
+def test_named_targets_are_marked():
+    import release_day
+    hosts = release_day.build_hosts(limit=3).set_index("hostname")
+    assert hosts.loc["TIC 147035057", "named_target"] and hosts.loc["TIC 159614322", "named_target"]
+    assert hosts["named_target"].sum() == 2
+
+
+def test_run_writes_live_progress_and_dashboard(dryrun):
+    status = json.loads((dryrun / "status.json").read_text())
+    assert status["stage"] == "done" and status["n_jobs"] == 10
+    lines = (dryrun / "progress.jsonl").read_text().splitlines()
+    assert len(lines) == 10 and all(json.loads(x)["status"] == "fitted" for x in lines)
+    assert len(pd.read_csv(dryrun / "hosts.csv")) == 10
+    inj = pd.read_csv(dryrun / "injections.csv")
+    df = pd.read_csv(dryrun / "results.csv")
+    named = df[df.named_target].source_id
+    for sid in list(inj.source_id) + list(named):
+        assert (dryrun / "diagnostics" / f"{sid}.json").exists()
+    page = (dryrun / "dashboard" / "index.html").read_text(encoding="utf-8")
+    assert "TIC 147035057" in page and "Injected planets" in page

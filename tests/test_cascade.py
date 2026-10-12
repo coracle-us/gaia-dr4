@@ -99,3 +99,41 @@ def test_per_host_period_range_finds_short_known_period(scanlaw):
                       search_kw=dict(p_min=0.95 * p_yr, p_max=1.05 * p_yr))
     assert res.classification == "orbit"
     assert res.period == pytest.approx(p_yr, rel=0.01)
+
+
+def test_orbit_search_keeps_its_period_profile(scanlaw):
+    from companions.search import search_orbit_ml
+    orbit = dict(period=1.5, e=0.1, tp=0.0, a0=0.4, inc=np.deg2rad(90.0), omega=0.0, big_omega=1.0)
+    ep = simulate_epochs(scanlaw, 60.0, 10.0, 11.0, STAR, np.random.default_rng(15), orbit=orbit)
+    res = search_orbit_ml(ep, model="5p")
+    assert len(res.grid.periods) == len(res.grid.dchi2) > 50
+    assert res.grid.best_period == pytest.approx(1.5, rel=0.1)
+
+
+def test_detection_carries_plot_diagnostics(scanlaw):
+    import json
+    orbit = dict(period=1.5, e=0.1, tp=0.0, a0=0.4, inc=np.deg2rad(90.0), omega=0.0, big_omega=1.0)
+    ep = simulate_epochs(scanlaw, 60.0, 10.0, 11.0, STAR, np.random.default_rng(13), orbit=orbit)
+    res = run_cascade(ep, _host(), THR, model="5p", do_stability=False)
+    d = res.diagnostics
+    json.dumps(d)                                             # serialisable as-is
+    n_tr = ep.transit.max() + 1
+    for key in ("t", "phase", "orbit_resid", "orbit_model", "accel_resid", "accel_model", "err"):
+        assert len(d["transits"][key]) == n_tr
+    tr = {k: np.array(v) for k, v in d["transits"].items()}
+    # the orbit model explains the per-transit signal left after the single-star part
+    chi2_null = np.sum((tr["orbit_resid"] / tr["err"]) ** 2)
+    chi2_model = np.sum(((tr["orbit_resid"] - tr["orbit_model"]) / tr["err"]) ** 2)
+    assert chi2_model < 0.5 * chi2_null
+    assert d["period_profile"]["best_period_yr"] == pytest.approx(1.5, rel=0.1)
+    assert len(d["sky_orbit"]["ra_mas"]) == len(d["sky_orbit"]["dec_mas"]) > 50
+    assert d["thresholds"]["orbit"] == THR.orbit
+    assert d["orbit"]["a0_mas"] == pytest.approx(0.4, rel=0.3)
+
+
+def test_diagnostics_only_for_detections_unless_forced(scanlaw):
+    ep = simulate_epochs(scanlaw, 120.0, 25.0, 11.5, STAR, np.random.default_rng(10),
+                         s_ccd=0.02, s_tr=0.02)
+    assert run_cascade(ep, _host(), THR, model="5p").diagnostics == {}
+    forced = run_cascade(ep, _host(), THR, model="5p", diagnostics=True).diagnostics
+    assert len(forced["transits"]["t"]) == ep.transit.max() + 1

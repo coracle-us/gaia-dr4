@@ -27,7 +27,8 @@ Everything below runs from the repository root in the project venv (`.venv\Scrip
    Check:
    - the injected planets are recovered (`results/dryrun/injections.csv` against `results.csv`);
    - false positives ≈ 0;
-   - `n_errors` = 0 in `run_summary.json`.
+   - `n_errors` = 0 in `run_summary.json`;
+   - the dashboard `results/dryrun/dashboard/index.html` shows the candidates, their plots and the injected planets.
 4. **Control stars** for the real-data null calibration. This is already done if `data/control_stars.csv` exists.
    ```bash
    .venv/Scripts/python scripts/calibrate_null_real.py --prepare-dr3 200
@@ -80,6 +81,11 @@ Add rows for collaborators' targets: Gaia DR3 id, RA/Dec, G, distance and stella
 
    Expected time: download depends on archive load; fitting takes about 6 min plus about 1 min per orbit detection.
 
+   **Watch it:** open `results/dr4/dashboard/index.html` in a browser. It reloads every minute and shows the stage, hosts downloaded and fitted, errors, candidates as they appear (with vetting checklist and plots), and the named targets next to their pre-registered predictions. The pipeline rebuilds it as hosts finish; to force a rebuild from another terminal:
+   ```bash
+   .venv/Scripts/python scripts/dashboard.py results/dr4
+   ```
+
    If downloads fail partway, rerun the same command (it resumes), or refit offline from what is cached:
    ```bash
    .venv/Scripts/python scripts/release_day.py --source cache --out results/dr4
@@ -90,9 +96,15 @@ Add rows for collaborators' targets: Gaia DR3 id, RA/Dec, G, distance and stella
    ```
    - Compare `results/thresholds_real.csv` with `results/thresholds.csv`.
    - If the real thresholds are higher, set `"thresholds_file": "results/thresholds_real.csv"` and rerun step 1 with `--source cache`.
-3. **Tables.**
+3. **Population and tables.**
+   ```bash
+   .venv/Scripts/python scripts/population_analysis.py results/dr4/results.csv --out results/dr4
+   ```
    ```bash
    .venv/Scripts/python scripts/make_table.py results/dr4/results.csv --out paper/
+   ```
+   ```bash
+   .venv/Scripts/python scripts/dashboard.py results/dr4
    ```
 
 ## Vetting every candidate (CLAUDE.md §5; flags in `results.csv`)
@@ -108,6 +120,8 @@ Add rows for collaborators' targets: Gaia DR3 id, RA/Dec, G, distance and stella
 | `gaia_rv_variable` | Epoch RVs are not constant after removing the transiting planet: stellar companion? |
 | `dpac_solutions` | DPAC already has a solution. **Compare and cite.** |
 | `brown_dwarf_mass` / `stellar_mass` | Not a planet. Report as a companion of that class. |
+
+**Recording decisions.** Checks done by hand (independent re-derivation, SB2 / overluminosity checks, known-companion searches) go in `results/dr4/manual_vetting.csv` with columns `hostname, check, status, note`. `check` is one of `significance, stability, impostor_twin, stellar_companion, gaia_epoch_rv, dpac, mass, eccentricity, rederivation`; `status` is `pass`, `warn`, `fail` or `pending`. Rebuild the dashboard after editing it. A candidate is ready to claim only when its dashboard status is `pass`.
 
 **For each surviving detection:**
 1. Run the joint fit with the literature RVs (`companions.joint.fit_joint_ml`).

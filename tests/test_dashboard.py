@@ -145,3 +145,22 @@ def test_epoch_rv_check_not_applicable_when_vetting_was_not_run():
     for k in ("gaia_rv_n", "gaia_rv_variable", "gaia_rv_pvalue"):
         row.pop(k)
     assert _checks(row)["gaia_epoch_rv"]["status"] == "na"
+
+
+def test_double_lined_host_fails_the_twin_check():
+    c = _checks(_orbit_row(fraction_double_lined=0.6, has_epoch_rvs=True))
+    assert c["impostor_twin"]["status"] == "fail"
+    single = _checks(_orbit_row(fraction_double_lined=0.0, has_epoch_rvs=True,
+                                flags="impostor_not_excluded;stability_confirmed"))
+    assert single["impostor_twin"]["status"] == "pending"
+    assert "single-lined" in single["impostor_twin"]["detail"]
+
+
+def test_named_target_shows_rv_tests_at_known_periods(tmp_path):
+    out = _run_dir(tmp_path, stage="done", n_done=3)
+    pd.DataFrame(dict(source_id=[3, 3], hostname=["TIC 147035057"] * 2, period_d=[37.31497, 74.6],
+                      n=[40, 40], k_ms=[24900.0, 300.0], k_err_ms=[200.0, 200.0],
+                      k_upper_ms=[25500.0, 900.0], dchi2=[3000.0, 2.0],
+                      t0_offset_d=[0.3, np.nan])).to_csv(out / "named_rv.csv", index=False)
+    page = build_dashboard(out).read_text(encoding="utf-8")
+    assert "37.315" in page and "24900" in page

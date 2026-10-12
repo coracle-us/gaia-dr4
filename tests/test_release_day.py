@@ -65,6 +65,8 @@ def test_cache_mode_runs_on_raw_downloads_with_dpac_vetting(tmp_path):
     (raw / "dpac").mkdir(parents=True)
     pd.DataFrame(dict(source_id=[ids[0]], nss_solution_type=["Orbital"], period=[700.0])).to_csv(
         raw / "dpac" / "gaiadr4.nss_two_body_orbit.csv", index=False)
+    pd.DataFrame(dict(source_id=[ids[1]], has_epoch_rvs=[True], fraction_double_lined=[0.4])).to_csv(
+        raw / "dpac" / "gaiadr4.all_source_rvs.csv", index=False)
     out = tmp_path / "out"
     release_day.main(["--source", "cache", "--limit", "3", "--procs", "2", "--no-posterior",
                       "--raw-dir", str(raw), "--out", str(out)])
@@ -73,6 +75,8 @@ def test_cache_mode_runs_on_raw_downloads_with_dpac_vetting(tmp_path):
     # named extra targets were never downloaded by the stub archive
     assert (df[~df.index.isin(ids)].status == "no epoch data").all()
     assert df.loc[ids[0], "dpac_solutions"] == "Orbital"
+    assert df.loc[ids[1], "fraction_double_lined"] == pytest.approx(0.4)    # DR4 SB2 indicator
+    assert (out / "named_rv.csv").exists()
 
 
 def test_named_extra_targets_always_included_with_period_windows():
@@ -108,3 +112,10 @@ def test_run_writes_live_progress_and_dashboard(dryrun):
         assert (dryrun / "diagnostics" / f"{sid}.json").exists()
     page = (dryrun / "dashboard" / "index.html").read_text(encoding="utf-8")
     assert "TIC 147035057" in page and "Injected planets" in page
+
+
+def test_named_targets_carry_rv_test_periods_and_reference_epochs():
+    import release_day
+    hosts = release_day.build_hosts(limit=1).set_index("hostname")
+    assert hosts.loc["TIC 159614322", "rv_test_periods_d"] == "89.9651;179.9302"
+    assert hosts.loc["TIC 147035057", "rv_t0_bjd"] == pytest.approx(2458515.0661)

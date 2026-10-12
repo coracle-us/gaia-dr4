@@ -34,5 +34,14 @@
     "gaiadr4.nss_acceleration_astro",
     "gaiadr4.nss_multiple_orbits",
     "gaiadr4.nss_masses"
-  ]
+  ],
+  "rv_summary": {
+    "_comment": "DR4 RV summary per source: SB2 indicator. Verify table/column names on release day.",
+    "table": "gaiadr4.all_source_rvs",
+    "columns": [
+      "source_id",
+      "has_epoch_rvs",
+      "fraction_double_lined"
+    ]
+  }
 }

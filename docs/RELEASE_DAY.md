@@ -47,6 +47,7 @@ Check the following on the DR4 archive pages and the DR4 documentation, then edi
 | `data_release` | The exact release string DataLink expects (e.g. `"Gaia DR4"`). Test with one source: `Gaia.load_data(ids=[<id>], data_release=..., retrieval_type="EPOCH_ASTROMETRY", data_structure="RAW")`. |
 | `retrieval_type`, `rv_retrieval_type` | `EPOCH_ASTROMETRY`, `EPOCH_PARAMETERS_RVS_SINGLE` (draft data model). |
 | `dpac_tables`, `control.gaia_source_table`, `control.nss_tables` | DR4 TAP schema and table names (`gaiadr4.*`?). |
+| `rv_summary` | The TAP table and columns holding the DR4 SB2 indicator (draft data model: `all_source_rvs.has_epoch_rvs`, `fraction_double_lined`). This feeds the twin-impostor check and prediction H2 for TIC 147035057. |
 | `dr4_source_id` | Do DR3 ids persist? If DR4 ships a DR3→DR4 crossmatch, implement `map_source_ids` in `scripts/release_day.py`. |
 | Column names | Spot-check one epoch_astrometry file against `companions/epoch.py` (`obs_time_tcb`, `obs_time_bary_corr`, `scan_pos_angle`, `parallax_factor_al`, `colour_factor_al`, `centroid_pos_al`, `centroid_pos_error_al`, `used_by_agis_al`, `agis_source_excess_noise`). |
 
@@ -60,11 +61,17 @@ Check the following on the DR4 archive pages and the DR4 documentation, then edi
 `data/extra_targets.csv` lists targets that are always run, even if they are not in the planet archive. Columns:
 - `p_min_yr` / `p_max_yr`: an optional per-target period window;
 - `rv_known_period_d`: a period known from photometry, used to fit Gaia epoch RVs at that period;
+- `rv_test_periods_d` (`"P1;P2"`) and `rv_t0_bjd`: every candidate period, and the epoch of a primary eclipse or transit (BJD_TDB). Output `named_rv.csv` has one row per period with:
+  - K ± σ and the 3σ upper limit;
+  - Δχ² against a constant;
+  - the offset of the fitted conjunction from T0 (it should be ≈ 0 if the eclipsing body is the RV companion);
 - `note`.
 
 Current entries:
 - **TIC 147035057:** the expected 37.3-d photocentre orbit, plus the RV fit at the eclipse period. This settles single star vs SB2.
-- **TIC 159614322:** excludes stellar-mass companions at 90 / 180 d.
+- **TIC 159614322:** excludes stellar-mass companions at 90 / 180 d (K upper limit at both periods).
+
+The ephemerides (T0, periods) come from the duo-transits repo: `singles/results/vetting/147035057_ephemeris.json` and `singles/writeups/tic159614322/ephemeris.json`. That repo's DR4 checklist is `singles/TODO_gaia_dr4.md`.
 
 Add rows for collaborators' targets: Gaia DR3 id, RA/Dec, G, distance and stellar mass are needed.
 
@@ -118,6 +125,7 @@ Add rows for collaborators' targets: Gaia DR3 id, RA/Dec, G, distance and stella
 | `impostor_not_excluded` (no literature RVs) | Check the DR4 SB2 table (`rvs_epoch_parameters_double`), epoch `vbroad` variability, and overluminosity (`results/impostor_vetting.csv` → `dM_G`). |
 | `stellar_companion_check` | RUWE > 1.4 or a prior HGCA/PMa/DR3-NSS signal. Is the signal a known stellar companion? |
 | `gaia_rv_variable` | Epoch RVs are not constant after removing the transiting planet: stellar companion? |
+| `fraction_double_lined` > 0 | Double-lined RVS transits: a stellar binary. The dashboard marks the twin check as failed. A value of 0 does not exclude twins split by less than ~25 km/s. |
 | `dpac_solutions` | DPAC already has a solution. **Compare and cite.** |
 | `brown_dwarf_mass` / `stellar_mass` | Not a planet. Report as a companion of that class. |
 

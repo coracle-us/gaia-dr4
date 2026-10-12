@@ -75,10 +75,16 @@ def vetting_checklist(row: dict, thr: dict, manual: dict) -> list[dict]:
         out["stability"] = ("pending", "stability check not run")
     else:
         out["stability"] = ("na", "orbit-only check")
-    if "twin_excluded_lit_rv" in flags:
-        out["impostor_twin"] = ("pass", "literature RVs exclude a near-twin binary")
+    fdl = _num(row, "fraction_double_lined")
+    single = "; single-lined in DR4 RVS" if fdl == 0 else ""
+    if np.isfinite(fdl) and fdl > 0:
+        out["impostor_twin"] = ("fail", f"double-lined in DR4 RVS (fraction_double_lined = {fdl:.2f}): "
+                                        "a stellar binary")
+    elif "twin_excluded_lit_rv" in flags:
+        out["impostor_twin"] = ("pass", "literature RVs exclude a near-twin binary" + single)
     elif "impostor_not_excluded" in flags:
-        out["impostor_twin"] = ("pending", "no literature RVs: needs DR4 SB2 / line-width check")
+        out["impostor_twin"] = ("pending", "no literature RVs: needs DR4 SB2 / line-width check" + (
+            single + " (does not exclude twins split by less than ~25 km/s)" if single else ""))
     else:
         out["impostor_twin"] = ("na", "")
     if "stellar_companion_check" in flags:
@@ -181,7 +187,8 @@ def load_run(out: Path) -> dict:
     thr = status.get("thresholds") or (summary or {}).get("thresholds")
     return dict(out=out, status=status, summary=summary, hosts=hosts, results=res, thresholds=thr,
                 injections=pd.read_csv(out / "injections.csv") if (out / "injections.csv").exists() else None,
-                population=_read_json(out / "population_summary.json"))
+                population=_read_json(out / "population_summary.json"),
+                named_rv=pd.read_csv(out / "named_rv.csv") if (out / "named_rv.csv").exists() else None)
 
 
 def fetch_progress(status: dict, hosts) -> tuple[int, int] | None:
@@ -481,7 +488,8 @@ def build_dashboard(out, manual_path=None, predictions_path=PREDICTIONS) -> Path
                     f'{fmt(r.get("gaia_rv_n"), 0)}, {fmt(r.get("gaia_rv_pvalue"), 3)}, {fmt(r.get("gaia_rv_rms_ms"), 0)}'),
                    ("RV at known period: K [m/s], Δχ²",
                     f'{fmt(r.get("gaia_rv_known_period_k_ms"), 0)}, {fmt(r.get("gaia_rv_known_period_dchi2"))}'),
-                   ("DPAC NSS", esc(r.get("dpac_solutions")))]
+                   ("DPAC NSS", esc(r.get("dpac_solutions"))),
+                   ("DR4 RVS double-lined fraction", fmt(r.get("fraction_double_lined"), 2))]
             diag_path = out / "diagnostics" / f"{sid}.json"
             if diag_path.exists():
                 o = json.loads(diag_path.read_text())["orbit"]
@@ -491,6 +499,16 @@ def build_dashboard(out, manual_path=None, predictions_path=PREDICTIONS) -> Path
                                f'{fmt(o["e"], 2)}, {fmt(o.get("inc_deg"), 0)}'))
             block = [f'<div class="card"><h3>{esc(r["hostname"])}</h3>',
                      table(["observed in DR4", "value"], [[k, v] for k, v in obs])]
+            nrv = run["named_rv"]
+            if nrv is not None and len(nrv[nrv["source_id"] == sid]):
+                block.append("<div class='muted' style='margin-top:8px'>Gaia epoch RVs at the photometric "
+                             "period(s): circular fit; T0 offset = fitted conjunction minus the eclipse/transit "
+                             "epoch (0 if consistent)</div>" + table(
+                    ["P [d]", "N", "K [m/s]", "K 3σ upper [m/s]", "Δχ² vs constant", "T0 offset [d]"],
+                    [[fmt(x["period_d"], 3), fmt(x["n"], 0),
+                      f'{fmt(x.get("k_ms"), 0)} ± {fmt(x.get("k_err_ms"), 0)}', fmt(x.get("k_upper_ms"), 0),
+                      fmt(x.get("dchi2"), 1), fmt(x.get("t0_offset_d"), 2)]
+                     for x in nrv[nrv["source_id"] == sid].to_dict("records")]))
             if preds is not None:
                 p = preds[preds["target"] == r["hostname"]]
                 if len(p):

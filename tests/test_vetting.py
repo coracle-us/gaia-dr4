@@ -53,3 +53,43 @@ def test_known_period_rv_test_detects_orbit_at_that_period():
     flat = Table({"source_id": np.full(30, 6), "obs_time_rv": t, "radial_velocity": -42 + rng.standard_normal(30),
                   "radial_velocity_error": np.full(30, 1.0), "rv_validity_flag": np.ones(30, bool)})
     assert rv_known_period_test(rvdata_from_gaia_epoch(flat, 6), p_d)["dchi2"] < 15
+
+
+def _rv_table(sid, t, rv_kms, err=1.0):
+    return Table({"source_id": np.full(len(t), sid), "obs_time_rv": t, "radial_velocity": rv_kms,
+                  "radial_velocity_error": np.full(len(t), err), "rv_validity_flag": np.ones(len(t), bool)})
+
+
+def test_known_period_rv_test_reports_k_uncertainty_and_eclipse_phase():
+    from companions.gaia_rv import rvdata_from_gaia_epoch
+    from companions.vetting import rv_known_period_test
+    rng = np.random.default_rng(4)
+    t = np.sort(rng.uniform(1800, 3800, 40))                     # obs_time_rv [d]
+    p_d, t0_bjd = 37.315, 2458515.0661
+    t0 = t0_bjd - 2455197.5
+    # primary behind the companion at T0: RV through systemic, decreasing
+    rv = -42 - 25 * np.sin(2 * np.pi * (t - t0) / p_d) + rng.standard_normal(40)
+    res = rv_known_period_test(rvdata_from_gaia_epoch(_rv_table(5, t, rv), 5), p_d, t0_bjd=t0_bjd)
+    assert 0 < res["k_err_ms"] < 1000 and res["k_upper_ms"] > res["k_ms"]
+    assert abs(res["t0_offset_d"]) < 0.5
+    shifted = rv_known_period_test(rvdata_from_gaia_epoch(_rv_table(5, t, rv), 5), p_d,
+                                   t0_bjd=t0_bjd + p_d / 4)
+    assert abs(abs(shifted["t0_offset_d"]) - p_d / 4) < 0.5
+    assert np.isnan(rv_known_period_test(rvdata_from_gaia_epoch(_rv_table(5, t, rv), 5), p_d)["t0_offset_d"])
+
+
+def test_known_period_rv_table_has_one_row_per_candidate_period():
+    from companions.vetting import known_period_rv_table
+    rng = np.random.default_rng(5)
+    t = np.sort(rng.uniform(1800, 3800, 30))
+    tables = {7: _rv_table(7, t, 3 + rng.standard_normal(30))}
+    hosts = pd.DataFrame(dict(source_id=[7, 8, 9], hostname=["A", "B", "C"],
+                              rv_test_periods_d=["89.9651;179.9302", "10", ""],
+                              rv_t0_bjd=[2458703.8277, np.nan, np.nan]))
+    out = known_period_rv_table(tables, hosts)
+    a = out[out.hostname == "A"]
+    assert list(a.period_d) == [89.9651, 179.9302]
+    assert (a.n == 30).all() and (a.k_upper_ms > 0).all() and a.t0_offset_d.notna().all()
+    b = out[out.hostname == "B"]
+    assert len(b) == 1 and b.n.iloc[0] == 0                    # no epoch RVs downloaded
+    assert "C" not in set(out.hostname)

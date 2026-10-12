@@ -85,7 +85,7 @@ def build_hosts(limit: int | None = None) -> pd.DataFrame:
         ex["named_target"] = True
         tg = pd.concat([tg, ex], ignore_index=True)
     for col, fill in (("note", ""), ("p_min_yr", np.nan), ("p_max_yr", np.nan),
-                      ("rv_known_period_d", np.nan)):
+                      ("rv_known_period_d", np.nan), ("rv_test_periods_d", ""), ("rv_t0_bjd", np.nan)):
         tg[col] = tg[col].fillna(fill) if col in tg else fill
     tg["lit_rv_followup"] = tg["lit_rv_followup"].astype(bool)
     tg["epoch_rv_expected"] = tg["epoch_rv_expected"].astype(bool)
@@ -125,31 +125,50 @@ def choose_injections(hosts: pd.DataFrame, n: int, factor: float, rng) -> dict:
     return inj
 
 
-def dpac_and_rv_vetting(hosts: pd.DataFrame, cfg: dict, source: str, raw_root: Path) -> pd.DataFrame:
-    """DPAC NSS matches (TAP) and Gaia epoch-RV constancy (DataLink) for every host.
-    Failures are logged and leave the columns empty rather than stopping the run."""
-    from companions.vetting import epoch_rv_vetting, summarize_dpac
+def tap_rows(table: str, ids: list, dpac_dir: Path, source: str, columns: str = "*"):
+    """Rows of a DR4 TAP table for our source_ids, cached as dpac_dir/<table>.csv (raw download,
+    never edited). Only a datalink run queries the archive; None if not available."""
+    path = dpac_dir / f"{table}.csv"
+    if not path.exists() and source == "datalink":
+        from astroquery.gaia import Gaia
+        parts = []
+        for i in range(0, len(ids), 500):
+            id_list = ",".join(str(s) for s in ids[i:i + 500])
+            parts.append(Gaia.launch_job(f"select {columns} from {table} where source_id in "
+                                         f"({id_list})").get_results().to_pandas())
+        dpac_dir.mkdir(parents=True, exist_ok=True)
+        pd.concat(parts).to_csv(path, index=False)
+    return pd.read_csv(path) if path.exists() else None
+
+
+def dpac_and_rv_vetting(hosts: pd.DataFrame, cfg: dict, source: str, raw_root: Path,
+                        named_rv_path: Path | None = None) -> pd.DataFrame:
+    """DPAC NSS matches (TAP), the DR4 double-lined (SB2) indicator from the RV summary table
+    (TAP; fraction_double_lined > 0 means double-lined transits), Gaia epoch-RV constancy
+    (DataLink) for every host, and RV fits at the photometric periods of named targets
+    (named_rv_path). Failures are logged and leave the columns empty rather than stopping the run."""
+    from companions.vetting import epoch_rv_vetting, known_period_rv_table, summarize_dpac
     ids = hosts["dr4_source_id"].astype(int).tolist()
     out = pd.DataFrame(dict(source_id=ids))
     dpac_dir = raw_root / "dpac"
     try:
         tables = {}
         for table in cfg.get("dpac_tables", []):
-            path = dpac_dir / f"{table}.csv"
-            if not path.exists() and source == "datalink":
-                from astroquery.gaia import Gaia
-                parts = []
-                for i in range(0, len(ids), 500):
-                    id_list = ",".join(str(s) for s in ids[i:i + 500])
-                    parts.append(Gaia.launch_job(f"select * from {table} where source_id in "
-                                                 f"({id_list})").get_results().to_pandas())
-                dpac_dir.mkdir(parents=True, exist_ok=True)
-                pd.concat(parts).to_csv(path, index=False)
-            if path.exists():
-                tables[table] = pd.read_csv(path)
+            rows = tap_rows(table, ids, dpac_dir, source)
+            if rows is not None:
+                tables[table] = rows
         out = out.merge(summarize_dpac(tables, ids), on="source_id", how="left")
     except Exception as err:
         print(f"WARNING: DPAC NSS cross-match failed: {err}")
+    try:
+        summ = cfg.get("rv_summary", {})
+        if summ:
+            rows = tap_rows(summ["table"], ids, dpac_dir, source, ",".join(summ["columns"]))
+            if rows is not None:
+                rows = rows[[c for c in summ["columns"] if c in rows.columns]].drop_duplicates("source_id")
+                out = out.merge(rows, on="source_id", how="left")
+    except Exception as err:
+        print(f"WARNING: DR4 RV summary (SB2 indicator) failed: {err}")
     try:
         rv_hosts = hosts[hosts["epoch_rv_expected"].astype(bool)]
         rv_ids = rv_hosts["dr4_source_id"].astype(int).tolist()
@@ -164,6 +183,9 @@ def dpac_and_rv_vetting(hosts: pd.DataFrame, cfg: dict, source: str, raw_root: P
             rv_tables = ZipCacheSource(raw).fetch(rv_ids)
         vet = epoch_rv_vetting(rv_tables, rv_hosts.assign(source_id=rv_hosts["dr4_source_id"]))
         out = out.merge(vet, on="source_id", how="left")
+        if named_rv_path is not None:
+            known_period_rv_table(rv_tables, hosts.assign(source_id=hosts["dr4_source_id"])).to_csv(
+                named_rv_path, index=False, float_format="%.6g")
     except Exception as err:
         print(f"WARNING: epoch-RV vetting failed: {err}")
     return out
@@ -321,7 +343,8 @@ def main(argv=None) -> None:
 
     res = pd.DataFrame(rows)
     if args.source in ("datalink", "cache"):
-        res = res.merge(dpac_and_rv_vetting(hosts, cfg, args.source, args.raw_dir),
+        res = res.merge(dpac_and_rv_vetting(hosts, cfg, args.source, args.raw_dir,
+                                            named_rv_path=args.out / "named_rv.csv"),
                         on="source_id", how="left")
     out = base.merge(res.drop(columns=["hostname"]), on="source_id", how="left")
     out["status"] = out["status"].fillna("no epoch data")

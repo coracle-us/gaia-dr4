@@ -223,7 +223,8 @@ def make_host_plots(diag_path: Path, plot_dir: Path, sid: int, label: str) -> li
         ax.plot(np.array(pp["period_yr"], float) * 365.25, np.array(pp["dchi2"], float), lw=0.8)
         # grid Delta-chi2 is at the single-star noise, not the final dlnl2: no threshold line
         ax.axvline(orb["period_yr"] * 365.25, color="C2", lw=0.8, label=f"best P = {orb['period_yr'] * 365.25:.1f} d")
-        ax.set_xscale("log")
+        if pp["period_yr"][-1] / pp["period_yr"][0] > 3 or pp["period_yr"][0] / pp["period_yr"][-1] > 3:
+            ax.set_xscale("log")
         ax.legend(fontsize=7)
     ax.set(xlabel="period [d]", ylabel="Δχ² (grid, single-star noise)",
            title=f"{label}: period search (final dlnl2 = {orb['dlnl2']:.1f}, threshold {thr['orbit']:.1f})")
@@ -475,8 +476,6 @@ def build_dashboard(out, manual_path=None, predictions_path=PREDICTIONS) -> Path
             obs = [("classification", esc(r.get("classification"))),
                    ("status", esc(r.get("status"))),
                    ("dlnl2 orbit (period window)", fmt(r.get("dlnl2_orbit"))),
-                   ("best period [d]", fmt(_num(r, "period_yr") * 365.25, 2)),
-                   ("a0 [mas]", fmt(r.get("a0_mas"), 3)),
                    ("dlnl2 acc7 / acc9", f'{fmt(r.get("dlnl2_acc7"))} / {fmt(r.get("dlnl2_acc9"))}'),
                    ("Gaia epoch RVs: N, p(constant), rms [m/s]",
                     f'{fmt(r.get("gaia_rv_n"), 0)}, {fmt(r.get("gaia_rv_pvalue"), 3)}, {fmt(r.get("gaia_rv_rms_ms"), 0)}'),

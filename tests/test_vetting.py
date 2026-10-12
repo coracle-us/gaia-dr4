@@ -93,3 +93,41 @@ def test_known_period_rv_table_has_one_row_per_candidate_period():
     b = out[out.hostname == "B"]
     assert len(b) == 1 and b.n.iloc[0] == 0                    # no epoch RVs downloaded
     assert "C" not in set(out.hostname)
+
+
+def _conjunction_bjd(p_d, e, omega, tp_bjd, secondary=False):
+    nu = (1.5 if secondary else 0.5) * np.pi - omega
+    big_e = 2 * np.arctan(np.sqrt((1 - e) / (1 + e)) * np.tan(nu / 2))
+    return tp_bjd + ((big_e - e * np.sin(big_e)) % (2 * np.pi)) / (2 * np.pi) * p_d
+
+
+def test_keplerian_rv_fit_at_fixed_period_recovers_eccentric_orbit_and_eclipse_phase():
+    from companions.gaia_rv import rvdata_from_gaia_epoch
+    from companions.orbit import solve_kepler
+    from companions.vetting import rv_keplerian_fixed_period
+    rng = np.random.default_rng(6)
+    p_d, e, omega, k, tp_bjd = 72.5336, 0.48, np.deg2rad(201.5), 22.7, 2457418.905   # DR3 SB1 of EPIC 211892898
+    t = np.sort(rng.uniform(1800, 3800, 40))                    # obs_time_rv [d]
+    big_e = solve_kepler(2 * np.pi * (t + 2455197.5 - tp_bjd) / p_d, e)
+    nu = 2 * np.arctan2(np.sqrt(1 + e) * np.sin(big_e / 2), np.sqrt(1 - e) * np.cos(big_e / 2))
+    rv = 83 + k * (np.cos(nu + omega) + e * np.cos(omega)) + rng.standard_normal(40)
+    data = rvdata_from_gaia_epoch(_rv_table(9, t, rv), 9)
+    t_prim = _conjunction_bjd(p_d, e, omega, tp_bjd)
+    res = rv_keplerian_fixed_period(data, p_d, t0_bjd=t_prim)
+    assert res["k_ms"] / 1000 == pytest.approx(k, rel=0.05)
+    assert res["e"] == pytest.approx(e, abs=0.05)
+    assert np.rad2deg(np.angle(np.exp(1j * (np.deg2rad(res["omega_deg"]) - omega)))) == pytest.approx(0, abs=8)
+    assert abs(res["t0_offset_d"]) < 1.0 and res["dchi2"] > 1000
+    t_sec = _conjunction_bjd(p_d, e, omega, tp_bjd, secondary=True)
+    assert abs(rv_keplerian_fixed_period(data, p_d, t0_bjd=t_sec)["t0_offset_d"]) > 10
+
+
+def test_known_period_rv_table_includes_keplerian_columns():
+    from companions.vetting import known_period_rv_table
+    rng = np.random.default_rng(7)
+    t = np.sort(rng.uniform(1800, 3800, 30))
+    out = known_period_rv_table({7: _rv_table(7, t, 3 + rng.standard_normal(30))},
+                                pd.DataFrame(dict(source_id=[7], hostname=["A"], rv_test_periods_d=["73.245"],
+                                                  rv_t0_bjd=[2457747.385])))
+    for col in ("kep_k_ms", "kep_e", "kep_omega_deg", "kep_dchi2", "kep_t0_offset_d"):
+        assert col in out.columns and np.isfinite(out[col].iloc[0])

@@ -502,12 +502,15 @@ def build_dashboard(out, manual_path=None, predictions_path=PREDICTIONS) -> Path
             nrv = run["named_rv"]
             if nrv is not None and len(nrv[nrv["source_id"] == sid]):
                 block.append("<div class='muted' style='margin-top:8px'>Gaia epoch RVs at the photometric "
-                             "period(s): circular fit; T0 offset = fitted conjunction minus the eclipse/transit "
-                             "epoch (0 if consistent)</div>" + table(
-                    ["P [d]", "N", "K [m/s]", "K 3σ upper [m/s]", "Δχ² vs constant", "T0 offset [d]"],
+                             "period(s), circular and Keplerian fits; T0 offset = fitted primary conjunction minus the "
+                             "eclipse/transit epoch (0 if consistent; use the Keplerian one when e is large)</div>" + table(
+                    ["P [d]", "N", "circular K [m/s]", "K 3σ upper [m/s]", "Δχ²", "T0 offset [d]",
+                     "Keplerian K [m/s]", "e", "ω [°]", "Δχ²", "T0 offset [d]"],
                     [[fmt(x["period_d"], 3), fmt(x["n"], 0),
                       f'{fmt(x.get("k_ms"), 0)} ± {fmt(x.get("k_err_ms"), 0)}', fmt(x.get("k_upper_ms"), 0),
-                      fmt(x.get("dchi2"), 1), fmt(x.get("t0_offset_d"), 2)]
+                      fmt(x.get("dchi2"), 1), fmt(x.get("t0_offset_d"), 2), fmt(x.get("kep_k_ms"), 0),
+                      fmt(x.get("kep_e"), 3), fmt(x.get("kep_omega_deg"), 0), fmt(x.get("kep_dchi2"), 1),
+                      fmt(x.get("kep_t0_offset_d"), 2)]
                      for x in nrv[nrv["source_id"] == sid].to_dict("records")]))
             if preds is not None:
                 p = preds[preds["target"] == r["hostname"]]

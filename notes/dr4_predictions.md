@@ -1,6 +1,6 @@
-# Pre-registered Gaia DR4 predictions: TIC 147035057 and TIC 159614322
+# Pre-registered Gaia DR4 predictions for named targets
 
-Written **2026-10-12**, before Gaia DR4 (2 Dec 2026); TIC 238606535 added the same day. The git commit and push timestamps of this file are the record. **Do not edit after release**; add outcomes in a separate section below.
+Written **2026-10-12**, before Gaia DR4 (2 Dec 2026); TIC 238606535, TIC 184895645 and TIC 301328232 added the same day. The git commit and push timestamps of this file are the record. **Do not edit after release**; add outcomes in a separate section below.
 
 **Sources**
 - Numbers: `scripts/dr4_predictions.py` → `results/dr4_predictions.csv`.
@@ -138,6 +138,68 @@ Expert feedback on this target raised two points that the hypotheses above did n
 3. **An astrometric orbit** would mean ≳ 0.1 M☉ at 140 d (≳ 0.15 M☉ at 70 d). DR3 RV constancy already disfavours ≳ 0.2 M☉ (K1 ≈ 6–7.5 km/s against ≈ 2.2 km/s per-epoch scatter).
 4. **On the DR3 excess noise:** astrometric_excess_noise = 0.21 mas at G = 10.7 is not by itself evidence of a companion (RUWE is only 1.19). If DR4 shows a ~0.2 mas photocentre orbit at one of these periods, it would point to a ~0.2 M☉ companion, in tension with the DR3 RVs.
 5. **Our expectation:** a null result in both astrometry and RVs, giving the RV upper limit above. The period alias then remains for photometry to settle.
+
+## Eclipsing binaries from the K2 work: added 2026-10-12, before DR4
+
+**Source:** the duo-transits repo, `k2singles/results/full2_triage.md`; ephemerides in `k2singles/results/ephemerides/<EPIC>.json`. Each binary was vetted there by an adversarial review and a blind re-derivation.
+
+**Independent checks here (2026-10-12)**
+- Gaia DR3 values re-queried.
+- The DR3 SB1 orbit propagated to eclipse times.
+- The HD 220967 identification confirmed.
+
+Numbers come from `scripts/dr4_predictions.py` and `results/dr4_predictions.csv`. The astrometric Δχ² uses the circular-orbit expression, which is an approximation for these eccentric orbits.
+
+### TIC 184895645 (EPIC 211892898): red-giant eclipsing SB1, a pipeline validation case
+
+**System**
+- Gaia DR3 660920219027943552: G = 11.81, G_RVS = 10.85, parallax 0.878 mas (1.14 kpc), RUWE 1.60, non_single_star = 2.
+- DR3 SB1 solution: P = 72.534 ± 0.029 d, e = 0.480 ± 0.019, ω = 201.5 ± 1.8°, T_p = BJD 2457418.905 ± 0.25, K1 = 22.75 ± 0.85 km/s, so f(M) = 0.060 M☉.
+- K2 eclipses (C5, C16, C18): P = 72.50887 ± 0.0014 d, T0 = BJD_TDB 2457189.3272 ± 0.019; depth 6–7 ppt; T14 51–56 h.
+- Propagated here, the DR3 elements put the primary conjunction (ν + ω = 90°) 1.0 d from the K2 eclipse ephemeris (≈ 1.5σ in DR3 T_p and P). The secondary conjunction would be 17 d off.
+- With M1 = 1.11 M☉ (APO-K2 asteroseismology, as reported by the duo-transits reviewer; not re-checked here) and sin i ≈ 1: M2 = 0.55 M☉.
+- The companion contributes ~0.1% of the G flux, so the photocentre follows the giant.
+
+**Predictions**
+1. **Epoch RVs:** single-lined (`fraction_double_lined` = 0 or null). The fixed-period Keplerian fit (`named_rv.csv`, kep_*) at 72.509 d should give:
+   - K1 = 22.7 ± ~1 km/s and e = 0.48 ± ~0.03;
+   - ω ≈ 200°;
+   - a primary conjunction within ~1 d of the K2 eclipses (kep_t0_offset_d ≈ 0; |offset| ≲ 1 d).
+   The circular-fit offset is not meaningful at this eccentricity.
+2. **Astrometry:**
+   - photocentre orbit a0 ≈ 0.12 mas at P ≈ 72.5 d, expected Δχ² ≈ 145 (above the 50%-completeness level of ~80), so a detection in the 0.189–0.208 yr window;
+   - its inclination should be near 90° (eclipsing), and its period consistent with 72.51 d.
+   - A non-detection would most likely mean extra astrometric noise from the giant, not a wrong orbit.
+3. **DPAC:** an SB1 or AstroSpectroSB1 solution in the DR4 NSS tables, consistent with DR3.
+4. **Use:** if 1–3 hold, the system validates the named-target RV and astrometry chain on a known binary.
+
+### TIC 301328232 (EPIC 246194159 = HD 220967): eccentric EB of two F stars
+
+**System**
+- Gaia DR3 2633217515438236544: G = 9.39, parallax 5.624 mas (178 pc), RUWE 1.24, non_single_star = 0.
+- DR3 published **no RVS output** for this star (no G_RVS, no RV) despite G = 9.4.
+- Identification: the 1.8″ offset from the J2000 position equals 16 yr of its 110 mas/yr proper motion, and it is the only Gaia source within 36″.
+- Ephemeris (K2 C12, TESS S70, S92): P = 73.245178 ± 0.000007 d, primary T0 = BJD_TDB 2457747.38501 ± 0.0003.
+  - The secondary eclipse falls at phase 0.867, so e cos ω ≈ 0.577 and e ≥ 0.58 (blind estimate e ≈ 0.66).
+  - Depths are 37% and 30%, suggesting two similar F stars.
+
+| Mass ratio (M1 = 1.25 M☉) | G flux ratio | a0 | Expected Δχ² | K1 (e = 0.66) | Max line separation |
+|---|---|---|---|---|---|
+| q = 0.8 | 0.37 | 0.44 mas | ≈ 1,500 | 39 km/s | ≈ 140 km/s |
+| q = 0.9 | 0.60 | 0.25 mas | ≈ 500 | 43 km/s | ≈ 143 km/s |
+| q = 1.0 | 1.00 | 0 | 0 | 46 km/s | ≈ 145 km/s |
+
+**Predictions**
+1. **Epoch RVs:** DR4 places this star in the double-lined products (`fraction_double_lined` > 0). Component separations reach ~140 km/s near periastron, far above the RVS resolution (~25 km/s).
+   - Any single-template epoch RVs will scatter strongly.
+   - If DR4 publishes double-lined epoch velocities, they give a benchmark dynamical mass for both stars, with e ≈ 0.6 at P = 73.245 d.
+2. **Astrometry:**
+   - DR3 RUWE = 1.24 at G = 9.4 favours a small photocentre orbit, i.e. a near-equal pair (q ≳ 0.95, a0 ≲ 0.1 mas). An a0 ≳ 0.25 mas would conflict with it.
+   - Our expectation: no significant photocentre orbit, or a marginal one, in the 0.190–0.211 yr window.
+   - A strong orbit would point to q ≲ 0.9 and a fainter secondary.
+3. **Phase check:**
+   - If the RV fit is single-lined (blended), K and ω are not physical; the double-lined products decide.
+   - The Keplerian fit's e should be ≥ 0.58 if the RVs track the primary.
 
 ## Outcomes (to be added after 2 Dec 2026)
 

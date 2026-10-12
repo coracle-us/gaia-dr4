@@ -101,6 +101,17 @@ benchmark for substellar models. The Euclid consortium owns lens finding; we are
 - Number of Gaia host stars within ~200 pc in the DR1 footprint.
 - Pilot design: `notes/euclid_pilot_design.md` (Q1 + Gaia DR3 now, DR1 + DR4 data swap later).
 
+**Scoping answers (2026-10-11):** DR1-Foundation is **12 Nov 2026** and includes the merged MER
+catalogue, NISP 1D spectra and SPE catalogues (only shear + LE3 products wait for mid-2027; ESA
+memo EUCL-EST-ME-8-020). Q1 access via astroquery works anonymously (uploads need login). Late-T
+companions reachable to ~200 pc, Y0 to ~60 pc (4-5x VHS/CatWISE distance). No proper motions in
+DR1; earlier epochs give ~5-20 mas/yr only for J_Vega <~ 20-21. ~65,000 Gaia stars within 200 pc
+in the DR1 footprint (scaled from Q1). Overlap: the EC UCD team ran a small Gaia companion search
+on Q1 (Mohandasan+2025 §4.4) and has had DR1 since Oct 2025; Backyard Worlds mines public Euclid
+data; no EC Key Project on brown dwarfs. **Recommendation: GO for a narrow pilot** (faint/close
+T-dwarf companions to Gaia DR4 hosts at 50-200 pc with calibrated chance alignment and companion
+fractions; exoplanet- and white-dwarf-host niches), **not** a generic companion catalogue.
+
 ## 3. Sensitivity rule of thumb
 
 Astrometric signature: **α [arcsec] = (M_p / M_★) · (a [AU]) / (d [pc])**.

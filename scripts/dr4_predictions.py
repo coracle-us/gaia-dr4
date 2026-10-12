@@ -66,6 +66,35 @@ def mass_at_d50(n, g, m1, p_days, plx):
     return np.sqrt(lo * hi)
 
 
+def candidate_rows(sl, ms, target, g, plx, m1, ra, dec, periods, rv_err, rv_n, cases) -> list[dict]:
+    """Transiting-companion candidate: a0, dchi2_exp and K1 for each hypothesised companion mass at
+    each candidate period, the DR4 astrometric 50%-completeness mass and the DR4 epoch-RV 3-sigma
+    mass limit (circular, edge-on)."""
+    rows = []
+    n = n_obs(sl, ra, dec)
+    sig_rv = np.sqrt((rv_err**2 - 0.11**2) * 2 * rv_n / np.pi)        # DR3 per-epoch scatter
+    for p in periods:
+        for label, m2 in cases:
+            f2 = ms.flux_ratio(m1, m2 / m1, "G") if m2 > 0.08 else 0.0
+            a_rel, a0, k1 = orbit_terms(m1, m2, p, plx, f2)
+            rows.append(dict(target=target, hypothesis=label, period_d=p, m2_msun=m2,
+                             flux_ratio_g=f2, a_rel_au=a_rel, a0_mas=a0, inc_deg=90.0, n_obs=n,
+                             dchi2_exp=dchi2(n, a0, g), k1_kms=k1, gaia_rv_sigma_epoch_kms=sig_rv))
+        rows.append(dict(target=target, hypothesis="DR4 astrometry 50%-completeness mass",
+                         period_d=p, m2_msun=mass_at_d50(n, g, m1, p, plx) * MJUP, n_obs=n))
+        # DR4 epoch-RV limit: assume DR3 per-epoch scatter and twice the DR3 epochs (66 vs 34
+        # months), 3-sigma on K for a circular, edge-on orbit: K_lim = 3 sigma sqrt(2 / N)
+        k_lim = 3 * sig_rv * np.sqrt(2 / (2 * rv_n))
+        lo, hi = 1e-3, 1000.0
+        for _ in range(100):
+            mid = np.sqrt(lo * hi)
+            lo, hi = (mid, hi) if orbit_terms(m1, mid * MJUP, p, plx)[2] < k_lim else (lo, mid)
+        rows.append(dict(target=target, hypothesis="DR4 epoch-RV 3-sigma mass limit",
+                         period_d=p, m2_msun=np.sqrt(lo * hi) * MJUP, k1_kms=k_lim,
+                         gaia_rv_sigma_epoch_kms=sig_rv))
+    return rows
+
+
 def main() -> None:
     sl, ms = ScanLaw.load(), MainSequence.load()
     rows = []
@@ -93,29 +122,18 @@ def main() -> None:
                          k1_kms=k1_t, line_split_kms=k1_t * (1 + q) / q))
 
     # --- TIC 159614322: G = 11.63, 401 pc (plx 2.495), M1 = 1.11; P = 89.965 or 179.930 d
-    g, plx, m1 = 11.63, 2.495, 1.11
-    n = n_obs(sl, 220.00977, 65.48404)
-    sig_rv = np.sqrt((0.4**2 - 0.11**2) * 2 * 22 / np.pi)               # DR3: err 0.4 km/s, 22 transits
-    for p in (89.9651, 179.9302):
-        for label, m2 in (("H1 planet, 1 M_J", 1 * MJUP), ("H1 planet, 13 M_J", 13 * MJUP),
-                          ("H2 brown dwarf, 50 M_J", 50 * MJUP), ("H3 M dwarf, 0.15 M_sun", 0.15)):
-            f2 = ms.flux_ratio(m1, m2 / m1, "G") if m2 > 0.08 else 0.0
-            a_rel, a0, k1 = orbit_terms(m1, m2, p, plx, f2)
-            rows.append(dict(target="TIC 159614322", hypothesis=label, period_d=p, m2_msun=m2,
-                             flux_ratio_g=f2, a_rel_au=a_rel, a0_mas=a0, inc_deg=90.0, n_obs=n,
-                             dchi2_exp=dchi2(n, a0, g), k1_kms=k1, gaia_rv_sigma_epoch_kms=sig_rv))
-        rows.append(dict(target="TIC 159614322", hypothesis="DR4 astrometry 50%-completeness mass",
-                         period_d=p, m2_msun=mass_at_d50(n, g, m1, p, plx) * MJUP, n_obs=n))
-        # DR4 epoch-RV limit: assume DR3 per-epoch scatter and twice the DR3 epochs (66 vs 34
-        # months), 3-sigma on K for a circular, edge-on orbit: K_lim = 3 sigma sqrt(2 / N)
-        k_lim = 3 * sig_rv * np.sqrt(2 / 44)
-        lo, hi = 1e-3, 1000.0
-        for _ in range(100):
-            mid = np.sqrt(lo * hi)
-            lo, hi = (mid, hi) if orbit_terms(m1, mid * MJUP, p, plx)[2] < k_lim else (lo, mid)
-        rows.append(dict(target="TIC 159614322", hypothesis="DR4 epoch-RV 3-sigma mass limit",
-                         period_d=p, m2_msun=np.sqrt(lo * hi) * MJUP, k1_kms=k_lim,
-                         gaia_rv_sigma_epoch_kms=sig_rv))
+    rows += candidate_rows(sl, ms, "TIC 159614322", g=11.63, plx=2.495, m1=1.11, ra=220.00977,
+                           dec=65.48404, periods=(89.9651, 179.9302), rv_err=0.4, rv_n=22,
+                           cases=(("H1 planet, 1 M_J", 1 * MJUP), ("H1 planet, 13 M_J", 13 * MJUP),
+                                  ("H2 brown dwarf, 50 M_J", 50 * MJUP), ("H3 M dwarf, 0.15 M_sun", 0.15)))
+    # --- TOI-5560.01 = EPIC 211924561 = TIC 238606535 (added 2026-10-12, before DR4): Gaia DR3
+    # 660640844292494336, G = 10.696, plx 2.6249 mas, FLAME M1 = 1.424; P = 140.494 or 70.247 d.
+    # DR3 RV: error 0.601 km/s, 22 transits, p = 0.082 (constant).
+    rows += candidate_rows(sl, ms, "TIC 238606535", g=10.696, plx=2.6249, m1=1.424, ra=132.652500,
+                           dec=19.091309, periods=(70.24701, 140.49401), rv_err=0.601, rv_n=22,
+                           cases=(("H1 planet, 1 M_J", 1 * MJUP), ("H1 planet, 13 M_J", 13 * MJUP),
+                                  ("H2 brown dwarf, 50 M_J", 50 * MJUP), ("H3 M dwarf, 0.1 M_sun", 0.10),
+                                  ("H3 M dwarf, 0.2 M_sun", 0.20)))
     df = pd.DataFrame(rows)
     df["m2_mjup"] = df.m2_msun / MJUP
     df["detectable_astrometry"] = df.dchi2_exp > D50
@@ -125,7 +143,6 @@ def main() -> None:
     with pd.option_context("display.width", 220):
         print(df[cols].round(4).to_string(index=False))
     print(f"TIC 147035057 mass function f(M) = {fm_h1:.4f} M_sun -> M2 >= {m2_h1:.2f} M_sun (sin i = 1)")
-    print(f"TIC 159614322 Gaia per-epoch RV scatter (from DR3) ~ {sig_rv:.2f} km/s")
 
 
 if __name__ == "__main__":

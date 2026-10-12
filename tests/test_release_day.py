@@ -7,6 +7,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
+N_NAMED = len(pd.read_csv(Path(__file__).resolve().parents[1] / "data/extra_targets.csv"))
+
 
 @pytest.fixture(scope="module")
 def dryrun(tmp_path_factory):
@@ -25,7 +27,7 @@ def dryrun(tmp_path_factory):
 
 def test_results_table_has_every_host(dryrun):
     df = pd.read_csv(dryrun / "results.csv")
-    assert len(df) == 8 + 2                       # 8 archive hosts + 2 named extra targets
+    assert len(df) == 8 + N_NAMED                 # 8 archive hosts + the named extra targets
     for col in ("hostname", "source_id", "classification", "dlnl2_orbit", "flags",
                 "m50_mj_P3", "status"):
         assert col in df.columns
@@ -43,7 +45,7 @@ def test_injected_planets_are_recovered(dryrun):
 
 def test_run_summary_written(dryrun):
     summary = json.loads((dryrun / "run_summary.json").read_text())
-    assert summary["n_hosts"] == 10 and summary["source"] == "simulate"
+    assert summary["n_hosts"] == 8 + N_NAMED and summary["source"] == "simulate"
     assert "git_commit" in summary and "thresholds" in summary
 
 
@@ -84,7 +86,7 @@ def test_named_extra_targets_always_included_with_period_windows():
     hosts = release_day.build_hosts(limit=3)
     names = set(hosts.hostname)
     assert {"TIC 147035057", "TIC 159614322"} <= names
-    assert len(hosts) == 5
+    assert len(hosts) == 3 + N_NAMED
     row = hosts.set_index("hostname").loc["TIC 147035057"]
     assert 0.09 < row.p_min_yr < 0.1022 < row.p_max_yr < 0.11
     assert row.rv_known_period_d == pytest.approx(37.31497)
@@ -96,15 +98,15 @@ def test_named_targets_are_marked():
     import release_day
     hosts = release_day.build_hosts(limit=3).set_index("hostname")
     assert hosts.loc["TIC 147035057", "named_target"] and hosts.loc["TIC 159614322", "named_target"]
-    assert hosts["named_target"].sum() == 2
+    assert hosts["named_target"].sum() == N_NAMED
 
 
 def test_run_writes_live_progress_and_dashboard(dryrun):
     status = json.loads((dryrun / "status.json").read_text())
-    assert status["stage"] == "done" and status["n_jobs"] == 10
+    assert status["stage"] == "done" and status["n_jobs"] == 8 + N_NAMED
     lines = (dryrun / "progress.jsonl").read_text().splitlines()
-    assert len(lines) == 10 and all(json.loads(x)["status"] == "fitted" for x in lines)
-    assert len(pd.read_csv(dryrun / "hosts.csv")) == 10
+    assert len(lines) == 8 + N_NAMED and all(json.loads(x)["status"] == "fitted" for x in lines)
+    assert len(pd.read_csv(dryrun / "hosts.csv")) == 8 + N_NAMED
     inj = pd.read_csv(dryrun / "injections.csv")
     df = pd.read_csv(dryrun / "results.csv")
     named = df[df.named_target].source_id

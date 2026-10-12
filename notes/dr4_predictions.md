@@ -1,6 +1,6 @@
 # Pre-registered Gaia DR4 predictions: TIC 147035057 and TIC 159614322
 
-Written **2026-10-12**, before Gaia DR4 (2 Dec 2026). The git commit and push timestamps of this file are the record. **Do not edit after release**; add outcomes in a separate section below.
+Written **2026-10-12**, before Gaia DR4 (2 Dec 2026); TIC 238606535 added the same day. The git commit and push timestamps of this file are the record. **Do not edit after release**; add outcomes in a separate section below.
 
 **Sources**
 - Numbers: `scripts/dr4_predictions.py` → `results/dr4_predictions.csv`.
@@ -95,6 +95,49 @@ Expert feedback on this target raised two points that the hypotheses above did n
 | Double-lined epoch spectra / SB2 products | H2 |
 | Flat epoch RVs at 37.315 d | H0 (or H3 with a quiet primary) |
 | RV variability not phased on 37.315 d | H3, or variability unrelated to the eclipses |
+
+## TIC 238606535 (TOI-5560.01 = EPIC 211924561): added 2026-10-12, before DR4
+
+**Source:** the duo-transits repo, `k2singles/README.md` ("EPIC 211924561: blind re-analysis").
+
+**System**
+- Gaia DR3 660640844292494336: G = 10.70, parallax 2.625 mas (381 pc), RUWE 1.19, astrometric_excess_noise 0.21 mas (sig 58), non_single_star = 0.
+- FLAME M1 = 1.424 M☉; Teff 6680 K; v sin i 15 km/s (TRES, ExoFOP).
+- DR3 values re-queried independently on 2026-10-12 and matched those reported.
+- Four transits (K2 C5, K2 C16, TESS S46, TESS S72): P = 140.49401 d or its alias 70.24701 d, T0 = BJD_TDB 2457179.89774.
+  - The C16 and S46 epochs fall at cycles 7 and 17 of the 140.494-d period, as computed here.
+  - The transit is V-shaped with b ≳ 0.9. Duration vs stellar density needs e ≳ 0.5 at 140.5 d (≳ 0.3 at 70.2 d).
+- DR3 RVs: constant (22 transits, p = 0.082; error 0.60 km/s, so ≈ 2.2 km/s per epoch).
+- The nearest Gaia neighbour is 8.8″ away at G = 20.5, irrelevant to the photocentre.
+
+| Companion | P = 70.247 d: a0 | Δχ² | K1 | P = 140.494 d: a0 | Δχ² | K1 |
+|---|---|---|---|---|---|---|
+| 1 M_J planet | 0.0007 mas | 0.003 | 0.04 km/s | 0.0010 mas | 0.008 | 0.03 km/s |
+| 13 M_J | 0.0085 mas | 0.6 | 0.50 km/s | 0.0135 mas | 1.4 | 0.40 km/s |
+| 50 M_J brown dwarf | 0.032 mas | 8 | 1.9 km/s | 0.051 mas | 20 | 1.5 km/s |
+| 0.1 M☉ M dwarf | 0.066 mas | 33 | 3.9 km/s | 0.105 mas | 84 | 3.1 km/s |
+| 0.2 M☉ M dwarf | 0.126 mas | 123 | 7.5 km/s | 0.200 mas | 309 | 5.9 km/s |
+
+**DR4 sensitivity at these periods** (edge-on, circular)
+
+| Method | P = 70.247 d | P = 140.494 d |
+|---|---|---|
+| Astrometry (50% completeness) | 166 M_J | 102 M_J |
+| Epoch RVs (3σ; K_lim = 1.41 km/s) | 37 M_J | 47 M_J |
+
+- Assumptions are as for TIC 159614322: DR3 per-epoch precision, twice the DR3 number of epochs.
+- An eccentric orbit (e ≈ 0.5) raises K by ~15% at fixed mass, so the RV limits are slightly conservative.
+- Numbers come from `scripts/dr4_predictions.py` and `results/dr4_predictions.csv`.
+
+**Predictions**
+1. **If the transiting companion is a planet or a low-mass brown dwarf (≲ 40 M_J):**
+   - no astrometric orbit at either period (Δχ² ≲ 10);
+   - no epoch-RV signal at either period;
+   - DR4 then excludes ≳ 37–47 M_J (RVs). It cannot detect a planet.
+2. **An RV signal with K ≳ 1.5 km/s at 70.247 or 140.494 d,** phased so that the fitted conjunction falls at the transit epochs (`named_rv.csv` t0_offset_d ≈ 0), would mean a brown dwarf or low-mass star. Its period would also break the alias.
+3. **An astrometric orbit** would mean ≳ 0.1 M☉ at 140 d (≳ 0.15 M☉ at 70 d). DR3 RV constancy already disfavours ≳ 0.2 M☉ (K1 ≈ 6–7.5 km/s against ≈ 2.2 km/s per-epoch scatter).
+4. **On the DR3 excess noise:** astrometric_excess_noise = 0.21 mas at G = 10.7 is not by itself evidence of a companion (RUWE is only 1.19). If DR4 shows a ~0.2 mas photocentre orbit at one of these periods, it would point to a ~0.2 M☉ companion, in tension with the DR3 RVs.
+5. **Our expectation:** a null result in both astrometry and RVs, giving the RV upper limit above. The period alias then remains for photometry to settle.
 
 ## Outcomes (to be added after 2 Dec 2026)
 

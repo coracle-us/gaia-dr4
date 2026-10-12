@@ -70,6 +70,7 @@ Check the following on the DR4 archive pages and the DR4 documentation, then edi
 Current entries:
 - **TIC 147035057:** the expected 37.3-d photocentre orbit, plus the RV fit at the eclipse period. This settles single star vs SB2.
 - **TIC 159614322:** excludes stellar-mass companions at 90 / 180 d (K upper limit at both periods).
+- **TIC 238606535 (TOI-5560.01):** RV limit at 70.247 / 140.494 d (about 37–47 M_J), with a conjunction-phase check against the K2 transit epoch.
 
 The ephemerides (T0, periods) come from the duo-transits repo: `singles/results/vetting/147035057_ephemeris.json` and `singles/writeups/tic159614322/ephemeris.json`. That repo's DR4 checklist is `singles/TODO_gaia_dr4.md`.
 

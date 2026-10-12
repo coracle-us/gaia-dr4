@@ -22,7 +22,7 @@ Source: AAS Publications Committee, "Guidelines on the use of AI / LLMs in prepa
    - Claude wrote most of the analysis code and drafts of text.
    - Jon reviews and edits every sentence and checks every reference.
    - Validation (null and injection calibration, gaiasupdate reproduction, Gaia-4b recovery) is documented in `notes/phase1_validation.md`.
-3. **References:** export every BibTeX entry from ADS. Write none by hand or from memory.
+3. **References:** export BibTeX from ADS, or verify each entry against ADS/arXiv by hand. Never unverified entries.
 4. **Figure:** if the Note uses a figure, its caption names the tool if Claude produced the plotting code. The one-table-or-one-figure limit applies.
 5. **The duotransits note (submitted 2026-10-12):** check whether it carries an AI disclosure statement. If the editor asks, add one in the same form.
 
@@ -52,3 +52,35 @@ Source: https://journals.aas.org/research-note-preparation-guidelines
 - Published as submitted, with no copy-editing.
 - DOI and ADS indexing; CC-BY 4.0; no charges.
 - At most 20 Notes per first author per 12 months.
+
+## Lessons from the submitted duotransits note (AAS82207, 2026-10-12)
+
+Reported by the duo-transits session. Submitted source: `C:\git\duo-transits`, `singles/rnaas/rnaas.tex` at commit d932e46.
+
+**Word limit:** the submission site states **1,350 words** plus a 150-word abstract, with one figure **or** one table. The guidelines page says 1,500 including references. Plan for 1,350.
+
+**Template**
+- Overleaf AAS template "AASTeX Template for submissions to AAS Journals (ApJ-AJ-ApJS-ApJL-PSJ-RNAAS)".
+- Class line: plain `\documentclass{aastex701}`. The RNAAS option is deprecated in v7.
+- Author block: `\author[orcid=0009-0000-7524-4470]{Jon McBee}`, `\affiliation{Independent researcher, USA}`, `\email{...}`. Jon confirmed this form on 2026-10-12.
+
+**AI disclosure**
+- A `\section*{AI disclosure statement}` after `\facilities`/`\software` and before the bibliography.
+- The submission site has no separate AI field.
+
+**References**
+- That note used a hand-written `thebibliography`, with every entry verified against arXiv/ADS/ASCL metadata.
+- Either that or ADS-exported BibTeX meets the guideline. Never unverified entries.
+
+**Submission route**
+- Overleaf "Submit to AAS" button, then an emailed link to aas.msubmit.net.
+- The site sits behind a Cloudflare check, so Jon must finish this step in his own browser.
+
+**On the site**
+- **Corridor:** "The Solar System, Exoplanets, and Astrobiology".
+- **orcid-ID.png:** retype it from "Figure file" to "Other LaTeX file", or the note appears to have a figure as well as a table.
+- **Abstract field:** the imported text contains raw LaTeX (`\,`, `$...$`, `\%`). Replace it with plain text.
+- **Dataset DOIs:** answering Yes for MAST requires DOIs; Yes for IPAC asks for citations instead. For this note: NASA Exoplanet Archive PSCompPars 10.26133/NEA13 (verified on DataCite) and the Gaia DR4 DOI.
+- **Other answers:** digital assets none; funding no; ethics statement yes.
+- **UAT concepts:** entered on their own page.
+- **Approval:** the Approve checkbox appears only after you open the merged PDF.

@@ -3,18 +3,23 @@
 %% and references.bib.
 %%
 %% Rules (notes/aas_ai_policy.md, CLAUDE.md sections 5-6):
-%%  - <= 1,500 words incl. title, headers, caption, references and acknowledgments; abstract ~150.
+%%  - Word budget: the submission site states 1,350 words + a 150-word abstract (the guidelines
+%%    page says 1,500 incl. references); plan for 1,350 body words.
 %%  - ONE table (detections.tex); no figure. Full per-host table as MRT (hosts.mrt).
-%%  - Single author: write "I". No line numbers.
+%%  - Single author: write "I" in the body. No line numbers.
 %%  - Every number traces to a file in results/ and the script that wrote it; mark the source
 %%    in a comment next to each number.
 %%  - \XX{...} marks a value filled in after release. None may remain at submission.
-%%  - references.bib: export every entry from ADS. Write none by hand.
-%%  - Class line: check against the current AAS Overleaf RNAAS template (or the preamble of the
-%%    submitted duotransits note) before compiling.
-\documentclass[RNAAS]{aastex701}
+%%  - References: export BibTeX from ADS, or verify each entry against ADS/arXiv by hand.
+%%    Never unverified entries.
+%%  - Matches the submitted duotransits note (AAS82207; C:\git\duo-transits,
+%%    singles/rnaas/rnaas.tex at d932e46): Overleaf AAS template "AASTeX Template for
+%%    submissions to AAS Journals (ApJ-AJ-ApJS-ApJL-PSJ-RNAAS)" (aastex701.cls,
+%%    aasjournalv7.bst, orcid-ID.png), plain \documentclass{aastex701} (the RNAAS option is
+%%    deprecated in v7). Submission-site steps: notes/aas_ai_policy.md.
+\documentclass{aastex701}
 
-\usepackage{xcolor}
+\usepackage{xcolor}  % drafting only (for \XX); remove with the last \XX before submission
 \newcommand{\XX}[1]{\textcolor{red}{[#1]}}
 \newcommand{\gaia}{\textit{Gaia}}
 
@@ -22,12 +27,13 @@
 
 \title{\gaia\ DR4 Constraints on Outer Giant Companions to Stars Hosting Transiting Giant Planets}
 
-\author[0000-0000-0000-0000]{Jon McBee}  % XX: ORCID
-\affiliation{Coracle, \XX{city, country}}  % XX: decide affiliation (independent / Coracle)
+\author[orcid=0009-0000-7524-4470]{Jon McBee}
+\affiliation{Independent researcher, USA}
+\email{jon.mcbee@gmail.com}
 
 \begin{abstract}
-% ~150 words. Structure: what DR4 enables; sample; method in one sentence; detections; occurrence
-% / limits; mutual inclinations if any; data release.
+% <= 150 words. Structure: what DR4 enables; sample; method in one sentence; detections;
+% occurrence / limits; mutual inclinations if any; data release.
 \gaia\ Data Release 4 publishes per-transit epoch astrometry for the first time. I searched it
 for astrometric companions to \XX{N_hosts} stars hosting transiting giant planets, fitting a
 single-star model, two acceleration models and a Keplerian orbit (periods 0.1--4\,yr) with
@@ -37,6 +43,10 @@ vetting}. For companions of 1--13\,$M_J$ at 1--4\,yr, the occurrence rate is \XX
 upper limit}). \XX{Mutual-inclination sentence if detections allow.} The per-host results and
 completeness limits are released as a machine-readable table.
 \end{abstract}
+
+% UAT concepts with their IDs from https://astrothesaurus.org (verify each, e.g. astrometric
+% exoplanet detection, hot Jupiters, exoplanet systems). Entered again on the submission site.
+\keywords{\XX{UAT concepts}}
 
 \section{Introduction}
 % ~150 words. Hot/warm Jupiter migration; outer perturbers; RV companion rates (Knutson et al.
@@ -76,14 +86,14 @@ solutions), against \gaia\ DPAC solutions, and by an independent re-derivation
 (results/dr4/manual\_vetting.csv).
 
 \section{Results} \label{sec:results}
-% ~400 words + Table 1. Detections; accelerations; comparison with DPAC exoplanet catalogue
+% ~350 words + Table 1. Detections; accelerations; comparison with DPAC exoplanet catalogue
 % (cite, don't claim); occurrence (results/dr4/population_summary.json); limits.
 \XX{Results.}
 
 \input{detections.tex}
 
 \section{Discussion}
-% ~200 words. Comparison with RV companion rates; mutual inclinations (minimum Delta I only for
+% ~150 words. Comparison with RV companion rates; mutual inclinations (minimum Delta I only for
 % detections); caveats (impostors, P > 4 yr -> accelerations, DR4 noise).
 \XX{Discussion.}
 
@@ -95,24 +105,30 @@ DPAC has been provided by national institutions, in particular the institutions 
 in the \gaia\ Multilateral Agreement. This research has made use of the NASA Exoplanet Archive,
 which is operated by the California Institute of Technology, under contract with the National
 Aeronautics and Space Administration under the Exoplanet Exploration Program.
-% XX: check both texts against the current wording requested by ESA and the NASA Exoplanet Archive.
+% XX: check both texts against the current wording requested by ESA and the NASA Exoplanet
+% Archive; shorten if the word budget is tight (the duotransits note used one sentence).
+Data: \dataset[NASA Exoplanet Archive PSCompPars]{\doi{10.26133/NEA13}}, \gaia\ DR4 \XX{DOI}.
+% NEA DOI verified on DataCite by the duotransits session; the submission site asks for
+% dataset DOIs.
 \end{acknowledgments}
 
 \facilities{Gaia, Exoplanet Archive}
 \software{astropy, astroquery, numpy, scipy, emcee, matplotlib, gaiasupdate, gaiascanlaw,
-pandas \XX{versions; cite each via ADS / Zenodo; code DOI for github.com/coracle-us/gaia-dr4}}
+pandas \XX{versions; cite each via ADS / Zenodo / ASCL; code DOI for github.com/coracle-us/gaia-dr4}}
 
-\section*{AI disclosure}
-% Required by the AAS guidelines (notes/aas_ai_policy.md). Keep it TRUE for the final Note:
-% edit if the division of work changes. Count it in the word budget.
-The analysis software for this Note (\url{https://github.com/coracle-us/gaia-dr4}) was written
-largely by Claude (Anthropic), an AI model, used through Claude Code under my direction; Claude
-also ran the analysis and drafted text. I specified the analysis, reviewed the validation
-tests (reproduction of ESA's single-star fits, recovery of \gaia-4b, null and
-injection--recovery calibration), read, checked and edited all text, and verified every
-reference against ADS. Responsibility for the content lies entirely with me.
+\section*{AI disclosure statement}
+% Required by the AAS guidelines (notes/aas_ai_policy.md); placed after facilities/software and
+% before the bibliography, worded as in the submitted duotransits note. Keep it TRUE for the
+% final Note: edit if the division of work changes.
+The author used an AI assistant, Anthropic's Claude (a large language model), under his
+supervision. It wrote and ran the analysis code (\url{https://github.com/coracle-us/gaia-dr4})
+and drafted and edited the text of this note. The author reviewed the validation tests
+(reproduction of ESA's single-star fits, recovery of \gaia-4b, null and injection--recovery
+calibration), reviewed and edited the text, checked the numbers against the saved analysis
+outputs, and takes full responsibility for the content. Every reference was checked against
+ADS records. The note contains no AI-generated figures.
 
 \bibliography{references}{}
-\bibliographystyle{aasjournal}
+\bibliographystyle{aasjournalv7}
 
 \end{document}

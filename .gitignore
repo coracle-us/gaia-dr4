@@ -11,3 +11,4 @@ data/sim/
 results/dryrun/sim_epochs/
 *.egg-info/
 results/dryrun/
+drafts/

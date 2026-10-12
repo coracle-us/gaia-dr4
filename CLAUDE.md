@@ -187,7 +187,12 @@ file. Use them to rank targets by expected S/N.
 - Moderated, not peer reviewed; fast; ADS-indexed and citable; no author charges (Oct 2026).
 - ≤1,500 words, abstract required, **one figure or one table, not both**. AASTeX v7+.
 - Author: Jon McBee (independent; consider Coracle as affiliation). Claude is not an
-  author; acknowledge AI assistance and **check AAS journals' current AI policy first.**
+  author. **AAS AI guidelines checked 2026-10-12** (posted 9 Sep 2026; `notes/aas_ai_policy.md`):
+  AI cannot be an author; an AI disclosure statement at the end of the Note is required (tool +
+  purpose); AI-drafted text must be read, checked and edited by the author; every reference
+  verified via ADS (export BibTeX from ADS, never hand-written). Re-read before submitting.
+- Skeleton: `paper/dr4_companions.tex` (Overleaf; `\XX{}` marks post-release values),
+  `paper/references.bib` (ADS exports only), table from `scripts/make_table.py`.
 
 ## 7. Environment
 
@@ -220,7 +225,10 @@ file. Use them to rank targets by expected S/N.
   Cascade + release-day pipeline built and dry-run on all 781 hosts (0 errors, 0 false
   positives, 21/25 injections recovered with correct periods); runbook `docs/RELEASE_DAY.md`.
   Posteriors now in Campbell elements (flat Thiele–Innes priors bias masses high and i edge-on).
-  Population tools ready (occurrence, mutual-inclination width). Remaining before 25 Nov: finish
+  Population tools ready (occurrence, mutual-inclination width).
+  Release-day dashboard (2026-10-12): `results/<run>/dashboard/index.html`, rebuilt live by
+  `release_day.py` (progress, candidates with section-5 checklist + plots, named targets vs
+  predictions; manual decisions in `manual_vetting.csv`). RNAAS skeleton in `paper/`. Remaining before 25 Nov: finish
   DR3 control-star preparation (`data/control_stars.csv`), then
   tag `pre-dr4`.
 - Sensitivity (edge-on, Lammers & Winn Δχ² > 50, P ≤ 4 yr): 73 hosts reach ≤ 5 M_J,

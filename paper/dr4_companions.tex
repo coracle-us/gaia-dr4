@@ -1,0 +1,118 @@
+%% RNAAS skeleton: Gaia DR4 constraints on outer companions to transiting giant-planet hosts.
+%% Written 2026-10-12, before DR4. Upload to Overleaf with detections.tex (scripts/make_table.py)
+%% and references.bib.
+%%
+%% Rules (notes/aas_ai_policy.md, CLAUDE.md sections 5-6):
+%%  - <= 1,500 words incl. title, headers, caption, references and acknowledgments; abstract ~150.
+%%  - ONE table (detections.tex); no figure. Full per-host table as MRT (hosts.mrt).
+%%  - Single author: write "I". No line numbers.
+%%  - Every number traces to a file in results/ and the script that wrote it; mark the source
+%%    in a comment next to each number.
+%%  - \XX{...} marks a value filled in after release. None may remain at submission.
+%%  - references.bib: export every entry from ADS. Write none by hand.
+%%  - Class line: check against the current AAS Overleaf RNAAS template (or the preamble of the
+%%    submitted duotransits note) before compiling.
+\documentclass[RNAAS]{aastex701}
+
+\usepackage{xcolor}
+\newcommand{\XX}[1]{\textcolor{red}{[#1]}}
+\newcommand{\gaia}{\textit{Gaia}}
+
+\begin{document}
+
+\title{\gaia\ DR4 Constraints on Outer Giant Companions to Stars Hosting Transiting Giant Planets}
+
+\author[0000-0000-0000-0000]{Jon McBee}  % XX: ORCID
+\affiliation{Coracle, \XX{city, country}}  % XX: decide affiliation (independent / Coracle)
+
+\begin{abstract}
+% ~150 words. Structure: what DR4 enables; sample; method in one sentence; detections; occurrence
+% / limits; mutual inclinations if any; data release.
+\gaia\ Data Release 4 publishes per-transit epoch astrometry for the first time. I searched it
+for astrometric companions to \XX{N_hosts} stars hosting transiting giant planets, fitting a
+single-star model, two acceleration models and a Keplerian orbit (periods 0.1--4\,yr) with
+maximum-likelihood excess noise, at a false-alarm probability of $10^{-4}$ per star calibrated on
+simulated DR4 data. I find \XX{N_orbit} orbits and \XX{N_acc} accelerations; \XX{summary of
+vetting}. For companions of 1--13\,$M_J$ at 1--4\,yr, the occurrence rate is \XX{f} (\XX{95\%
+upper limit}). \XX{Mutual-inclination sentence if detections allow.} The per-host results and
+completeness limits are released as a machine-readable table.
+\end{abstract}
+
+\section{Introduction}
+% ~150 words. Hot/warm Jupiter migration; outer perturbers; RV companion rates (Knutson et al.
+% 2014; Bryan et al. 2016); HGCA; what astrometry adds (true mass, inclination; transit fixes
+% i_b ~ 90 deg, so minimum mutual inclinations). Xiao et al. 2026. Lammers & Winn forecasts.
+\XX{Introduction.}
+
+\section{Data and method} \label{sec:method}
+% ~400 words. Facts fixed before release; numbers below trace to results/ (see comments).
+\paragraph{Sample}
+Hosts of transiting planets with $M_p$ or $R_p$ in the giant range from the NASA Exoplanet
+Archive, cross-matched to \gaia\ (\XX{N_hosts}; data/targets.csv, scripts/build_targets.py).
+
+\paragraph{Model}
+For each host I fit the \gaia\ DR4 along-scan positions (\texttt{centroid\_pos\_al}) of each CCD
+with the six-parameter single-star model of the DR4 core solution (my fit reproduces ESA's
+\texttt{gaiasupdate} to $10^{-9}$; notes/phase1\_validation.md), plus per-CCD and per-transit
+excess noise fitted by maximum likelihood. Alternative models add a 7- or 9-parameter
+acceleration or a Keplerian photocentre orbit (linear Thiele--Innes constants; grid search in
+period, eccentricity and periastron time, then non-linear refinement). The statistic is twice
+the log-likelihood gain over the single-star model.
+
+\paragraph{Calibration}
+Thresholds at a false-alarm probability of $10^{-4}$ per star come from $10^4$ simulated
+single stars with the DR4 scanning law and noise model: \XX{42.6} (orbit), \XX{21.7} and
+\XX{27.1} (accelerations) % results/thresholds.csv; scripts/calibrate_null.py
+\XX{; confirmed / raised by \gaia\ DR4 control stars, results/thresholds\_real.csv}.
+Injection--recovery of 6000 planets gives 50\% completeness at an expected full-orbit
+$\Delta\chi^2 \approx 80$ % results/completeness_models.csv; scripts/injection_recovery.py
+and per-host mass limits (\XX{results/target\_sensitivity.csv, recalibrated after release?}).
+
+\paragraph{Vetting}
+Each detection is checked for stability under removal of a fifth of the data, for unresolved
+near-equal binaries (literature RVs, \gaia\ DR4 epoch RVs and double-lined products), for
+known stellar companions (RUWE, Hipparcos--\gaia\ accelerations, DR3 non-single-star
+solutions), against \gaia\ DPAC solutions, and by an independent re-derivation
+(results/dr4/manual\_vetting.csv).
+
+\section{Results} \label{sec:results}
+% ~400 words + Table 1. Detections; accelerations; comparison with DPAC exoplanet catalogue
+% (cite, don't claim); occurrence (results/dr4/population_summary.json); limits.
+\XX{Results.}
+
+\input{detections.tex}
+
+\section{Discussion}
+% ~200 words. Comparison with RV companion rates; mutual inclinations (minimum Delta I only for
+% detections); caveats (impostors, P > 4 yr -> accelerations, DR4 noise).
+\XX{Discussion.}
+
+\begin{acknowledgments}
+This work has made use of data from the European Space Agency (ESA) mission \gaia\
+(\url{https://www.cosmos.esa.int/gaia}), processed by the \gaia\ Data Processing and Analysis
+Consortium (DPAC, \url{https://www.cosmos.esa.int/web/gaia/dpac/consortium}). Funding for the
+DPAC has been provided by national institutions, in particular the institutions participating
+in the \gaia\ Multilateral Agreement. This research has made use of the NASA Exoplanet Archive,
+which is operated by the California Institute of Technology, under contract with the National
+Aeronautics and Space Administration under the Exoplanet Exploration Program.
+% XX: check both texts against the current wording requested by ESA and the NASA Exoplanet Archive.
+\end{acknowledgments}
+
+\facilities{Gaia, Exoplanet Archive}
+\software{astropy, astroquery, numpy, scipy, emcee, matplotlib, gaiasupdate, gaiascanlaw,
+pandas \XX{versions; cite each via ADS / Zenodo; code DOI for github.com/coracle-us/gaia-dr4}}
+
+\section*{AI disclosure}
+% Required by the AAS guidelines (notes/aas_ai_policy.md). Keep it TRUE for the final Note:
+% edit if the division of work changes. Count it in the word budget.
+The analysis software for this Note (\url{https://github.com/coracle-us/gaia-dr4}) was written
+largely by Claude (Anthropic), an AI model, used through Claude Code under my direction; Claude
+also ran the analysis and drafted text. I specified the analysis, reviewed the validation
+tests (reproduction of ESA's single-star fits, recovery of \gaia-4b, null and
+injection--recovery calibration), read, checked and edited all text, and verified every
+reference against ADS. Responsibility for the content lies entirely with me.
+
+\bibliography{references}{}
+\bibliographystyle{aasjournal}
+
+\end{document}

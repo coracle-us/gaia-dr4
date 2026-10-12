@@ -161,6 +161,9 @@ def test_named_target_shows_rv_tests_at_known_periods(tmp_path):
     pd.DataFrame(dict(source_id=[3, 3], hostname=["TIC 147035057"] * 2, period_d=[37.31497, 74.6],
                       n=[40, 40], k_ms=[24900.0, 300.0], k_err_ms=[200.0, 200.0],
                       k_upper_ms=[25500.0, 900.0], dchi2=[3000.0, 2.0],
-                      t0_offset_d=[0.3, np.nan])).to_csv(out / "named_rv.csv", index=False)
+                      t0_offset_d=[0.3, np.nan], kep_k_ms=[25100.0, 400.0], kep_e=[0.437, 0.1],
+                      kep_omega_deg=[201.0, 10.0], kep_dchi2=[3100.0, 3.0],
+                      kep_t0_offset_d=[-0.9, 5.0])).to_csv(out / "named_rv.csv", index=False)
     page = build_dashboard(out).read_text(encoding="utf-8")
     assert "37.315" in page and "24900" in page
+    assert "0.437" in page and "25100" in page                # Keplerian fit at the fixed period

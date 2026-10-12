@@ -134,6 +134,30 @@ def main() -> None:
                            cases=(("H1 planet, 1 M_J", 1 * MJUP), ("H1 planet, 13 M_J", 13 * MJUP),
                                   ("H2 brown dwarf, 50 M_J", 50 * MJUP), ("H3 M dwarf, 0.1 M_sun", 0.10),
                                   ("H3 M dwarf, 0.2 M_sun", 0.20)))
+    # --- Eclipsing binaries from the duo-transits K2 work (added 2026-10-12, before DR4).
+    # TIC 184895645 = EPIC 211892898: red giant (APO-K2 M1 = 1.11, R1 = 6.82 R_sun, as reported by
+    # the duo-transits reviewer) + dark-ish dwarf; DR3 SB1 P = 72.534 d, e = 0.480, K1 = 22.75 km/s.
+    g, plx, m1, p, e = 11.805, 0.8784, 1.11, 72.50887, 0.48
+    n = n_obs(sl, 130.894198, 18.62218)
+    fm = (22.747 / AU_YR_KMS) ** 3 * (72.5336 / 365.25) * (1 - 0.480105**2) ** 1.5 / (2 * np.pi) ** 3
+    m2 = min_mass_function_m2(fm, m1)
+    # a ~0.55 M_sun dwarf next to a ~20 L_sun giant: flux ratio in G ~1e-3, taken as 0
+    a_rel, a0, k1 = orbit_terms(m1, m2, p, plx, 0.0)
+    rows.append(dict(target="TIC 184895645", hypothesis="SB1: giant + dwarf (from DR3 SB1 mass function)",
+                     period_d=p, m2_msun=m2, flux_ratio_g=0.0, a_rel_au=a_rel, a0_mas=a0, inc_deg=90.0,
+                     n_obs=n, dchi2_exp=dchi2(n, a0, g), k1_kms=k1 / np.sqrt(1 - e**2)))
+    # TIC 301328232 = EPIC 246194159 = HD 220967: two F stars (depths 37% / 30%), P = 73.245 d,
+    # e ~ 0.66 (indicative), e cos(omega) ~ 0.577; FLAME 1.32 M_sun is a single-star fit to the blend.
+    g, plx, m1, p, e, ecosw = 9.39, 5.6242, 1.25, 73.245178, 0.66, 0.577
+    n = n_obs(sl, 352.045034, -5.142612)
+    for q in (0.8, 0.9, 1.0):
+        f_t = ms.flux_ratio(m1, q, "G")
+        a_rel, a0, k1 = orbit_terms(m1, q * m1, p, plx, f_t)
+        k1e = k1 / np.sqrt(1 - e**2)
+        rows.append(dict(target="TIC 301328232", hypothesis=f"SB2: two F stars (q = {q})", period_d=p,
+                         m2_msun=q * m1, flux_ratio_g=f_t, a_rel_au=a_rel, a0_mas=a0, inc_deg=90.0,
+                         n_obs=n, dchi2_exp=dchi2(n, a0, g), k1_kms=k1e,
+                         line_split_kms=k1e * (1 + q) / q * (1 + abs(ecosw))))
     df = pd.DataFrame(rows)
     df["m2_mjup"] = df.m2_msun / MJUP
     df["detectable_astrometry"] = df.dchi2_exp > D50

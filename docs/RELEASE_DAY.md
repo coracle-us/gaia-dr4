@@ -71,6 +71,10 @@ Current entries:
 - **TIC 147035057:** the expected 37.3-d photocentre orbit, plus the RV fit at the eclipse period. This settles single star vs SB2.
 - **TIC 159614322:** excludes stellar-mass companions at 90 / 180 d (K upper limit at both periods).
 - **TIC 238606535 (TOI-5560.01):** RV limit at 70.247 / 140.494 d (about 37–47 M_J), with a conjunction-phase check against the K2 transit epoch.
+- **TIC 184895645 (EPIC 211892898):** red-giant eclipsing SB1 with a DR3 orbit, a validation case. Expect a single-lined Keplerian K1 ≈ 22.7 km/s, e ≈ 0.48, conjunction at the K2 eclipses, and a ≈ 0.12 mas photocentre orbit.
+- **TIC 301328232 (HD 220967):** eccentric EB of two F stars (P = 73.245 d). Expect double-lined DR4 RV products; a benchmark mass if double-lined epoch velocities are published.
+
+`named_rv.csv` also holds a fixed-period Keplerian fit (`kep_*`: K, e, ω, T_p, conjunction offset). Use it rather than the circular fit when e is large.
 
 The ephemerides (T0, periods) come from the duo-transits repo: `singles/results/vetting/147035057_ephemeris.json` and `singles/writeups/tic159614322/ephemeris.json`. That repo's DR4 checklist is `singles/TODO_gaia_dr4.md`.
 

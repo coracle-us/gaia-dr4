@@ -14,9 +14,11 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from scipy.optimize import least_squares
 
 from companions.epoch import DAYS_PER_YEAR, JD_REF_EPOCH
 from companions.gaia_rv import rv_constancy, rvdata_from_gaia_epoch
+from companions.orbit import solve_kepler
 
 RV_VARIABLE_PVALUE = 1e-3
 
@@ -93,6 +95,54 @@ def rv_known_period_test(rv, period_days: float, t0_bjd: float = np.nan) -> dict
                 dchi2=chi2_const - chi2_orbit, t0_offset_d=offset)
 
 
+def _true_anomaly(t_d, p_d, e, tp_d):
+    big_e = solve_kepler(2 * np.pi * (t_d - tp_d) / p_d, e)
+    return 2 * np.arctan2(np.sqrt(1 + e) * np.sin(big_e / 2), np.sqrt(1 - e) * np.cos(big_e / 2))
+
+
+def rv_keplerian_fixed_period(rv, period_days: float, t0_bjd: float = np.nan, e_max: float = 0.9) -> dict:
+    """Keplerian orbit at a fixed period fitted to Gaia epoch RVs:
+    v = c + K [cos(nu + omega) + e cos(omega)], omega the primary's argument of periastron.
+    For given (e, T_p) the model is linear in (c, K cos omega, -K sin omega); (e, T_p) come from a
+    grid then least squares. Returns K [m/s], e, omega [deg], T_p [BJD], dchi2 against a
+    constant, and with t0_bjd (primary eclipse / transit) t0_offset_d: the nearest primary
+    conjunction (nu + omega = 90 deg, primary farthest) minus T0. For e ~ 0.5 the circular fit's
+    phase is biased; use this one. Needs >= 6 epochs to have any freedom left."""
+    t_d = rv.t * DAYS_PER_YEAR                                   # days from J2017.5
+    w = 1.0 / rv.err**2
+    sw = np.sqrt(w)
+
+    def linear(e, tp):
+        nu = _true_anomaly(t_d, period_days, e, tp)
+        design = np.column_stack([np.ones_like(t_d), np.cos(nu), np.sin(nu)])
+        coef, *_ = np.linalg.lstsq(design * sw[:, None], rv.rv * sw, rcond=None)
+        return coef, (rv.rv - design @ coef) * sw
+
+    best = (np.inf, 0.0, 0.0)
+    for e in np.linspace(0, e_max, 19):
+        for tp in np.linspace(0, period_days, 48, endpoint=False):
+            chi2 = float(np.sum(linear(e, tp)[1] ** 2))
+            if chi2 < best[0]:
+                best = (chi2, e, tp)
+    sol = least_squares(lambda x: linear(x[0], x[1])[1], [best[1], best[2]],
+                        bounds=([0.0, best[2] - period_days], [e_max, best[2] + period_days]),
+                        x_scale=[0.05, 0.02 * period_days])
+    e, tp = float(sol.x[0]), float(sol.x[1])
+    coef, resid = linear(e, tp)
+    chi2 = float(np.sum(resid**2))
+    mean = np.sum(w * rv.rv) / np.sum(w)
+    chi2_const = float(np.sum(w * (rv.rv - mean) ** 2))
+    k, omega = float(np.hypot(coef[1], coef[2])), float(np.arctan2(-coef[2], coef[1]))
+    offset = np.nan
+    if np.isfinite(t0_bjd):
+        nu_c = np.pi / 2 - omega
+        big_e = 2 * np.arctan(np.sqrt((1 - e) / (1 + e)) * np.tan(nu_c / 2))
+        t_conj = tp + ((big_e - e * np.sin(big_e)) % (2 * np.pi)) / (2 * np.pi) * period_days
+        offset = float((t_conj - (t0_bjd - JD_REF_EPOCH) + period_days / 2) % period_days - period_days / 2)
+    return dict(n=len(rv.t), k_ms=k, e=e, omega_deg=float(np.rad2deg(omega) % 360),
+                tp_bjd=tp + JD_REF_EPOCH, dchi2=chi2_const - chi2, t0_offset_d=offset)
+
+
 def _periods(value) -> list[float]:
     if value is None or (isinstance(value, float) and not np.isfinite(value)):
         return []
@@ -110,7 +160,10 @@ def known_period_rv_table(tables: dict, hosts: pd.DataFrame) -> pd.DataFrame:
             row = dict(source_id=sid, hostname=h.get("hostname"), period_d=p, n=0)
             if rv is not None and len(rv.t) >= 5:
                 row.update(rv_known_period_test(rv, p, h.get("rv_t0_bjd", np.nan)))
+            if rv is not None and len(rv.t) >= 6:
+                kep = rv_keplerian_fixed_period(rv, p, h.get("rv_t0_bjd", np.nan))
+                row.update({f"kep_{k}": v for k, v in kep.items() if k != "n"})
             rows.append(row)
     cols = ["source_id", "hostname", "period_d", "n", "k_ms", "k_err_ms", "k_upper_ms", "dchi2",
-            "t0_offset_d"]
+            "t0_offset_d", "kep_k_ms", "kep_e", "kep_omega_deg", "kep_tp_bjd", "kep_dchi2", "kep_t0_offset_d"]
     return pd.DataFrame(rows).reindex(columns=cols)

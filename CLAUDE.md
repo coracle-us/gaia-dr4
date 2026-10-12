@@ -77,6 +77,30 @@ Choose based on (1) sensitivity: enough targets where a Jupiter at 2–5 AU is d
 (2) **overlap with the 60+ DR4 collaboration papers**: do not race DPAC on their own
 headline analysis; (3) what we can finish and vet within ~2 weeks of release.
 
+## 2b. Phase 2: Euclid DR1 brown-dwarf companions (scoping; added 2026-10-11)
+
+**Priority rule: Gaia DR4 (2 Dec 2026) is the main project.** Euclid work must not slow the
+Gaia work: scoping now, a pilot in late November only if Phase 1 is on track, the main run after
+our Gaia release-day work is done.
+
+**Idea.** Euclid DR1 (first tranche "DR1-Foundation", November 2026, ~1,900 deg²; full DR1
+mid-2027) images faint, cold objects Gaia cannot see. Search it for faint red sources near Gaia
+DR4 stars that are physically bound: common proper motion (Euclid vs an earlier-epoch survey),
+photometric distance consistent with the host parallax, brown-dwarf colours, NISP spectra where
+bright enough. A bound wide brown dwarf inherits the host's age, distance and composition: a
+benchmark for substellar models. The Euclid consortium owns lens finding; we are not doing that.
+
+**Open questions (answers in `notes/euclid_scoping.md`, `notes/euclid_overlap.md`):**
+- Is the merged multi-band (MER) source catalogue in the November tranche?
+- Access: ESA Euclid Science Archive via `astroquery.esa.euclid` (ADQL, cutouts) on public Q1.
+- Depth: Wide-survey point-source limits (VIS, Y, J, H) and distance reach for L/T/Y dwarfs.
+- Proper motions: DR1 is single-epoch; which earlier surveys give a baseline (CatWISE, VHS,
+  UKIDSS, Pan-STARRS, Legacy Surveys, 2MASS) and at what precision.
+- Overlap: the EC ultracool-dwarf team (Q1 papers incl. a Gaia companion search), Backyard
+  Worlds (already mining public Euclid data), Hertfordshire benchmark-companion work.
+- Number of Gaia host stars within ~200 pc in the DR1 footprint.
+- Pilot design: `notes/euclid_pilot_design.md` (Q1 + Gaia DR3 now, DR1 + DR4 data swap later).
+
 ## 3. Sensitivity rule of thumb
 
 Astrometric signature: **α [arcsec] = (M_p / M_★) · (a [AU]) / (d [pc])**.

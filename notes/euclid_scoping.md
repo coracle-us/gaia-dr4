@@ -136,7 +136,11 @@ Source: `scripts/euclid_q1_hosts.py` → `results/euclid_q1_hosts.csv`.
 
 ## 7. Open items before the pilot
 
-- Download the DR1 expected-coverage HEALPix map and count hosts precisely, including how many of **our 781 transiting giant-planet hosts** fall in DR1. That is the Phase 1 tie-in.
+- **Done 2026-10-12** (`scripts/euclid_dr1_footprint.py` → `results/euclid_dr1_hosts.csv`):
+  - The ESA expected-coverage map (`cgv_map_dr1input_o13`, nside 8192) covers **2,109 deg²** of DR1 input. ESA expects ~1,900 deg² in the release; inclusion is not guaranteed.
+  - The footprint's median Galactic latitude is |b| = 43° (10–90%: 33–60°), similar to the Q1 fields, so the §5 host-density scaling is reasonable.
+  - **41 of our 788 transiting giant-planet hosts** fall in the footprint (5.2%, consistent with the area fraction). Examples: KELT-24 (97 pc), TOI-201 (112 pc; HGCA 3σ), TOI-2180 (116 pc; 261-d warm Jupiter), TOI-2447, WASP-97.
+  - These are the Phase 1 × Phase 2 overlap: Gaia DR4 astrometric limits on close companions plus Euclid limits on wide brown-dwarf companions for the same hosts.
 - Calibrate J_E ↔ J_MKO and the absolute-magnitude relations on Q1 UCDs with Gaia parallaxes.
 - Measure the real first-epoch astrometric precision (VHS, Legacy Surveys) against Euclid Q1 for UCDs.
 - Confirm the DR1 archive environment and table names, and whether table uploads become available, on 12 Nov.

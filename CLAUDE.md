@@ -165,7 +165,7 @@ file. Use them to rank targets by expected S/N.
 2. Read the DR4 collaboration papers relevant to us immediately, compare our detections
    with any published DPAC solutions, cite them.
 3. Vet every candidate (§5). Then write the RNAAS note: one table (detections + limits),
-   ≤1,500 words.
+   ≤1,350 words + 150-word abstract.
 
 ## 5. Rules of the road
 
@@ -185,9 +185,11 @@ file. Use them to rank targets by expected S/N.
 ## 6. Publication: Research Notes of the AAS
 
 - Moderated, not peer reviewed; fast; ADS-indexed and citable; no author charges (Oct 2026).
-- ≤1,500 words, abstract required, **one figure or one table, not both**. AASTeX v7+.
-- Author: Jon McBee (independent; consider Coracle as affiliation). Claude is not an
-  author. **AAS AI guidelines checked 2026-10-12** (posted 9 Sep 2026; `notes/aas_ai_policy.md`):
+- ≤1,350 words plus a ≤150-word abstract (limit stated on the submission site, per the
+  AAS82207 submission; the guidelines page says 1,500 incl. references), **one figure or one
+  table, not both**. AASTeX v7+ (`\documentclass{aastex701}`; the RNAAS option is deprecated).
+- Author: Jon McBee, ORCID 0009-0000-7524-4470, "Independent researcher, USA" (as on
+  AAS82207, confirmed by Jon 2026-10-12). Claude is not an author. **AAS AI guidelines checked 2026-10-12** (posted 9 Sep 2026; `notes/aas_ai_policy.md`):
   AI cannot be an author; an AI disclosure statement at the end of the Note is required (tool +
   purpose); AI-drafted text must be read, checked and edited by the author; every reference
   verified via ADS (export BibTeX from ADS, never hand-written). Re-read before submitting.

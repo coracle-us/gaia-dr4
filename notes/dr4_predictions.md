@@ -67,6 +67,35 @@ The RV limits assume the DR3 per-epoch precision and twice the DR3 number of epo
 3. **An astrometric orbit** would mean a companion of ≳ 0.1 M☉ at 90 d (≳ 67 M_J at 180 d). DR3's RV stability already makes a ~0.15 M☉ companion unlikely (K1 ≈ 5–6 km/s against 1.44 km/s scatter).
 4. **Our expectation: a null result in both astrometry and RVs.** The photometric transit predicted for 2026-12-28 06:42 UTC (±45 min) remains the decisive test of the period.
 
+## Addendum, 2026-10-12 (same day, still before DR4): TIC 147035057
+
+Expert feedback on this target raised two points that the hypotheses above did not cover.
+
+**1. Gaia DR3 RV amplitudes are often not confirmed by precise RVs.**
+- H1's photocentre size (0.49 mas) assumed the DR3 amplitude is real (K ≈ 25 km/s).
+- Add **H0: the DR3 RV amplitude is spurious.** DR4 epoch RVs then show no 37.315-d variation above ~1–2 km/s (the per-epoch scatter).
+- The eclipsing companion's mass is then unconstrained by RVs. Any astrometric signal at 37.3 d then measures the mass directly.
+
+**2. DR3 non_single_star = 0 weighs against a double-lined pair (H2), and the field is crowded.**
+- Add **H3: a blended or hierarchical eclipsing binary**, where the eclipse arises on a fainter star within ~1–2″, bound or not.
+- Its prediction: no significant 37.3-d photocentre orbit of the bright star.
+- Possible DR4 signatures of the close neighbour:
+  - a resolved or close pair (`nss_resolved_pair`, `duplicated_source`);
+  - an acceleration solution if the pair is bound and wide;
+  - an elevated excess noise.
+- If the DR3 RV variability is real but belongs to the bright star, it would not phase on 37.315 d.
+
+**Revised expectation.** H1 (a real 0.5 mas orbit) remains disfavoured by DR3 RUWE = 1.12. We no longer favour H2 over H0 and H3.
+
+**Discriminating DR4 observables:**
+
+| DR4 observable | Points to |
+|---|---|
+| 37.3-d astrometric orbit with a0 ~ 0.5 mas | H1 |
+| Double-lined epoch spectra / SB2 products | H2 |
+| Flat epoch RVs at 37.315 d | H0 (or H3 with a quiet primary) |
+| RV variability not phased on 37.315 d | H3, or variability unrelated to the eclipses |
+
 ## Outcomes (to be added after 2 Dec 2026)
 
 *(empty until DR4)*

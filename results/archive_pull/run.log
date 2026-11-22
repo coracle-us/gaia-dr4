@@ -1,0 +1,11 @@
+221 planets in 85 multi-planet systems; 118 non-target planets, 36 with P > 100 d or no P
+96 published solutions for 36 companions
+VizieR step failed on vizier.cds.unistra.fr: ConnectTimeout(MaxRetryError("HTTPSConnectionPool(host='vizier.cds.unistra.fr', port=443): Max retries exceeded with url: /viz-bin/votable (Caused by ConnectTimeoutError(<HTTPSConnection(host='vizier.cds.unistra.fr', port=443) at 0x117a2ee90>, 'Connection to vizier.cds.unistra.fr timed out. (connect timeout=60)'))"))
+J/ApJ/785/126 (vizier.cfa.harvard.edu) tables: ['J/ApJ/785/126/table1', 'J/ApJ/785/126/table3', 'J/ApJ/785/126/refs']
+  wrote vizier_J_ApJ_785_126_table1.csv 51 rows
+  wrote vizier_J_ApJ_785_126_table3.csv 1054 rows
+  wrote vizier_J_ApJ_785_126_refs.csv 44 rows
+J/ApJ/821/89 (vizier.cfa.harvard.edu) tables: ['J/ApJ/821/89/table2', 'J/ApJ/821/89/table4', 'J/ApJ/821/89/refs']
+  wrote vizier_J_ApJ_821_89_table2.csv 123 rows
+  wrote vizier_J_ApJ_821_89_table4.csv 333 rows
+  wrote vizier_J_ApJ_821_89_refs.csv 47 rows

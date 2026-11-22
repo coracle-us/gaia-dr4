@@ -1,0 +1,52 @@
+recno,Name,Mass,e_Mass,[Fe/H],e_[Fe/H],Sample,Ref,VP,Simbad,_RA,_DE
+1,GJ436,0.452,0.013,-0.03,0.2,Misaligned,"Von Braun et al. (2012), Bonfils et al. (2005)",VP,Simbad,175.54622,26.70657
+2,HAT-P-2,1.36,0.04,0.14,0.08,Misaligned,Pal et al. (2010),VP,Simbad,245.15149,41.04809
+3,HAT-P-4,1.26,0.1,0.2,0.08,Control,"Winn et al. (2011), Torres et al. (2012)",VP,Simbad,229.99136,36.22966
+4,HAT-P-6,1.29,0.06,-0.11,0.08,Misaligned,"Noyes et al. (2008), Torres et al. (2012)",VP,Simbad,354.77419,42.46598
+5,HAT-P-7,1.361,0.021,0.15,0.08,Misaligned,"Van Eylen et al. (2012), Torres et al. (2012)",VP,Simbad,292.24734,47.96952
+6,HAT-P-8,1.192,0.075,-0.04,0.08,Control,"Mancini et al. (2013b), Torres et al. (2012)",VP,Simbad,343.04109,35.44711
+7,HAT-P-10,0.83,0.03,0.25,0.07,Control,"Bakos et al. (2009b), Torres et al. (2012)",VP,Simbad,47.36893,30.67354
+8,HAT-P-11,0.81,0.03,0.33,0.07,Misaligned,"Bakos et al. (2010), Torres et al. (2012)",VP,Simbad,297.70937,48.08086
+9,HAT-P-12,0.733,0.018,-0.29,0.05,Control,Hartman et al. (2009),VP,Simbad,209.3895,43.49353
+10,HAT-P-13,1.32,0.062,0.46,0.07,Misaligned,"Southworth et al. (2012a), Torres et al. (2012)",VP,Simbad,129.88255,47.35204
+11,HAT-P-14,1.418,0.054,0.07,0.08,Misaligned,"Southworth (2012), Torres et al. (2012)",VP,Simbad,260.11614,38.24221
+12,HAT-P-15,1.013,0.043,0.31,0.08,Misaligned,"Kovacs et al. (2010), Torres et al. (2012)",VP,Simbad,66.24806,39.46064
+13,HAT-P-16,1.218,0.039,0.12,0.08,Misaligned,"Buchhave et al. (2010), Torres et al. (2012)",VP,Simbad,9.57317,42.46312
+14,HAT-P-17,0.857,0.039,0.06,0.08,Misaligned,"Howard et al. (2012), Torres et al. (2012)",VP,Simbad,324.53638,30.48873
+15,HAT-P-18,0.77,0.03,0.14,0.08,Control,"Hartman et al. (2011b), Torres et al. (2012)",VP,Simbad,256.34646,33.01249
+16,HAT-P-20,0.756,0.028,0.26,0.11,Misaligned,"Bakos et al. (2011), Torres et al. (2012)",VP,Simbad,111.91646,24.33652
+17,HAT-P-22,0.916,0.035,0.29,0.08,Control,"Bakos et al. (2011), Torres et al. (2012)",VP,Simbad,155.68162,50.12834
+18,HAT-P-24,1.191,0.042,-0.21,0.08,Control,"Kipping et al. (2010), Torres et al. (2012)",VP,Simbad,108.82508,14.26261
+19,HAT-P-26,0.816,0.033,0.1,0.08,Control,"Hartman et al. (2011a), Torres et al. (2012)",VP,Simbad,213.1564,4.06004
+20,HAT-P-29,1.207,0.046,0.14,0.08,Control,"Buchhave et al. (2011), Torres et al. (2012)",VP,Simbad,33.13122,51.77877
+21,HAT-P-30,1.242,0.041,0.13,0.08,Misaligned,Johnson et al. (2011),VP,Simbad,123.9499,5.83678
+22,HAT-P-31,1.218,0.07,0.15,0.08,Misaligned,Kipping et al. (2011),VP,Simbad,271.53772,26.42666
+23,HAT-P-32,1.16,0.04,-0.04,0.08,Misaligned,Hartman et al. (2011c),VP,Simbad,31.04282,46.68784
+24,HAT-P-33,1.38,0.04,0.07,0.08,Control,Hartman et al. (2011c),VP,Simbad,113.18424,33.83503
+25,HAT-P-34,1.392,0.047,0.21,0.1,Misaligned,Bakos et al. (2012),VP,Simbad,303.19535,18.10484
+26,HD149026,1.345,0.02,0.24,0.07,Control,"Carter et al. (2009), Torres et al. (2012)",VP,Simbad,247.62342,38.34731
+27,TRES-2,0.94,0.05,-0.01,0.08,Control,"Barclay et al. (2012), Torres et al. (2012)",VP,Simbad,286.80848,49.31641
+28,TRES-3,0.928,0.038,-0.2,0.07,Misaligned,"Sozzetti et al. (2009), Torres et al. (2012)",VP,Simbad,268.02925,37.54616
+29,TRES-4,1.339,0.086,0.14,0.09,Control,Sozzetti et al. (2009),VP,Simbad,268.30441,37.21177
+30,WASP-1,1.27,0.05,0.14,0.07,Control,"Southworth (2012), Torres et al. (2012)",VP,Simbad,5.16699,31.98994
+31,WASP-2,0.85,0.05,0.06,0.07,Misaligned,"Southworth (2012), Torres et al. (2012)",VP,Simbad,307.72554,6.42955
+32,WASP-3,1.2,0.01,-0.06,0.08,Control,"Pollacco et al. (2008), Torres et al. (2012)",VP,Simbad,278.63177,35.66154
+33,WASP-4,0.92,0.07,0.0,0.2,Control,"Doyle et al. (2013), Wilson et al. (2008)",VP,Simbad,353.56284,-42.06143
+34,WASP-7,1.34,0.09,0.0,0.1,Misaligned,"Doyle et al. (2013), Hellier et al. (2008)",VP,Simbad,311.04258,-39.22525
+35,WASP-8,1.04,0.08,0.17,0.07,Misaligned,"Doyle et al. (2013), Queloz et al. (2010)",VP,Simbad,359.9003,-35.03136
+36,WASP-10,0.75,0.03,0.05,0.08,Misaligned,"Johnson et al. (2009b), Torres et al. (2012)",VP,Simbad,348.99291,31.46286
+37,WASP-12,1.38,0.19,0.07,0.07,Misaligned,"Southworth (2012), Torres et al. (2012)",VP,Simbad,97.63664,29.6723
+38,WASP-14,1.35,0.12,-0.13,0.08,Misaligned,"Southworth (2012), Torres et al. (2012)",VP,Simbad,218.27648,21.89472
+39,WASP-15,1.305,0.051,0.0,0.1,Misaligned,Southworth et al. (2013),VP,Simbad,208.92794,-32.15963
+40,WASP-16,0.98,0.05,0.07,0.1,Control,Southworth et al. (2013),VP,Simbad,214.68301,-20.27551
+41,WASP-17,1.286,0.079,-0.02,0.09,Misaligned,"Southworth et al. (2012a), Torres et al. (2012)",VP,Simbad,239.96228,-28.06176
+42,WASP-18,1.28,0.09,0.11,0.08,Control,"Doyle et al. (2013), Torres et al. (2012)",VP,Simbad,24.35431,-45.67789
+43,WASP-19,0.935,0.041,0.15,0.07,Control,"Mancini et al. (2013a), Torres et al. (2012)",VP,Simbad,148.41699,-45.65918
+44,WASP-22,1.109,0.026,0.05,0.08,Control,Anderson et al. (2011),VP,Simbad,52.81802,-23.8197
+45,WASP-24,1.184,0.027,-0.02,0.1,Control,"Street et al. (2010), Torres et al. (2012)",VP,Simbad,227.21558,2.34332
+46,WASP-34,1.01,0.07,-0.02,0.1,Control,Smalley et al. (2011),VP,Simbad,165.39956,-23.86066
+47,WASP-38,1.23,0.04,-0.02,0.1,Misaligned,"Brown et al. (2012b), Torres et al. (2012)",VP,Simbad,243.95985,10.03259
+48,XO-2,0.98,0.02,0.35,0.08,Control,"Burke et al. (2007), Torres et al. (2012)",VP,Simbad,117.02695,50.22582
+49,XO-3,1.213,0.066,-0.05,0.08,Misaligned,"Winn et al. (2008a), Torres et al. (2012)",VP,Simbad,65.4696,57.81719
+50,XO-4,1.32,0.02,-0.03,0.08,Misaligned,"McCullough et al. (2008), Torres et al. (2012)",VP,Simbad,110.38819,58.26806
+51,XO-5,0.88,0.03,0.05,0.06,Control,Pal et al. (2009),VP,Simbad,116.7165,39.09457

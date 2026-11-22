@@ -7,5 +7,6 @@ matplotlib
 emcee
 requests
 astropy
+astropy-healpix
 gaiasupdate>=0.1.2
 pytest

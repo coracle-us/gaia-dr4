@@ -1,0 +1,25 @@
+hostname,companion,mass_mj,mass_type,msini_mj,period_d,a_au,ecc,ref,note
+HAT-P-13,c,14.6,msini,14.6,445.8,,,Knutson+2014 arXiv:1312.2954,plus RV trend
+WASP-8,c,26.1,true,8.33,3054.9,4.161,0.147,Parc+2026 arXiv:2610.25152,orbit Parc+2026; true mass Xiao+2026 arXiv:2609.01377
+HAT-P-2,c,10.7,true,,8500,,,de Beurs+2023 arXiv:2309.03256,RV+HG
+HD 118203,c,11.79,true,,,6.28,,Zhang+2024 arXiv:2407.21377,mutual inclination ~10 deg
+HAT-P-17,c,3.4,msini,3.4,,5.6,,Ranshaw+2026 arXiv:2609.09077,compilation
+WASP-41,c,3.18,msini,3.18,418.0,1.068,0.287,Parc+2026 arXiv:2610.25152,known (Neveu-VanMalle+2016)
+WASP-47,c,1.10,msini,1.10,578.2,1.363,0.12,Parc+2026 arXiv:2610.25152,known (Neveu-VanMalle+2016)
+Kepler-424,c,7.0,msini,7.0,223,,,Endl+2014 arXiv:1409.8156,
+KELT-6,c,3.71,msini,3.71,,2.39,,Ranshaw+2026 arXiv:2609.09077,compilation
+HAT-P-44,c,4.0,msini,4.0,,1.75,,Ranshaw+2026 arXiv:2609.09077,compilation
+WASP-132,d,5.63,msini,5.63,1741,,0.171,Parc+2026 arXiv:2610.25152,Grieves+2025
+HATS-59,c,12.7,msini,12.7,,2.50,,Ranshaw+2026 arXiv:2609.09077,compilation
+WASP-53,c,17.9,true,16.67,3083.7,3.910,0.8365,Parc+2026 arXiv:2610.25152,true mass Xiao+2026
+WASP-81,c,55.6,msini,55.6,1306,,0.5649,Parc+2026 arXiv:2610.25152,brown dwarf; 64 MJ true in Xiao+2026
+K2-232,c,5.3,msini,5.3,1950,,,Ranshaw+2026 arXiv:2609.09077,published DR4 forecast ~75%
+TOI-2158,c,1.62,msini,1.62,414.5,,,Knudstrup+2026 arXiv:2609.30915,plus RV trend
+Kepler-419,c,7.3,true,,,1.68,,Dawson+2014 arXiv:1405.5229,photodynamical; mutual inclination 9 deg
+TOI-2537,c,8.9,true,,1886,,,Xiao+2026 arXiv:2609.01377,
+WASP-22,c,4.89,msini,4.89,2540,3.76,0.461,Parc+2026 arXiv:2610.25152,trend Maxted+2010
+WASP-34,c,5.29,msini,5.29,2033.4,3.158,0.214,Parc+2026 arXiv:2610.25152,single-companion model
+WASP-67,c,2.88,msini,2.88,2244,3.201,0.132,Parc+2026 arXiv:2610.25152,new
+WASP-68,c,15.35,msini,15.35,6211,,0.804,Parc+2026 arXiv:2610.25152,brown dwarf
+WASP-99,c,21.4,msini,21.4,5795,,0.202,Parc+2026 arXiv:2610.25152,brown dwarf
+WASP-185,c,3.24,msini,3.24,1061,,0.097,Parc+2026 arXiv:2610.25152,Table 3 value

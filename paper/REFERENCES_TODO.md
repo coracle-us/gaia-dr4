@@ -1,6 +1,8 @@
 # References for known_companion_predictions.tex
 
-The .bib in this folder is a placeholder. Replace it with ADS exports before compiling:
+known_companion_predictions.bib is now a full bibliography built on 2026-11-23 from each paper's
+arXiv abstract page (all authors, titles, DOIs). It compiles as is. Before submission, either check
+each entry against its ADS record, or swap in the ADS export with the steps below (same keys):
 
 1. Paste this into the ADS search box (ui.adsabs.harvard.edu):
 

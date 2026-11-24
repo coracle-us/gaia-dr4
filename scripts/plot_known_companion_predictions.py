@@ -3,7 +3,8 @@
 Detection probability in simulated DR4 epoch astrometry (results/known_companion_predictions.csv,
 scripts/known_companion_predictions.py) against the naive expected full-orbit Delta chi^2,
 with the injection-recovery completeness for P < 5.5 yr (results/completeness.csv) for reference.
-Writes figures/known_companion_predictions.png and .pdf.
+Writes figures/known_companion_predictions_fig1.png and .pdf (not known_companion_predictions.pdf:
+that name collides with the compiled note in a local LaTeX build).
 """
 from pathlib import Path
 import numpy as np
@@ -65,7 +66,7 @@ def main():
     fig.tight_layout()
     FIG.mkdir(exist_ok=True)
     for ext in ("png", "pdf"):
-        fig.savefig(FIG / f"known_companion_predictions.{ext}", dpi=200)
+        fig.savefig(FIG / f"known_companion_predictions_fig1.{ext}", dpi=200)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,87 @@
+\begin{thebibliography}{}
+\expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
+\providecommand{\url}[1]{\href{#1}{#1}}
+\providecommand{\dodoi}[1]{doi:~\href{http://doi.org/#1}{\nolinkurl{#1}}}
+\providecommand{\doeprint}[1]{\href{http://ascl.net/#1}{\nolinkurl{http://ascl.net/#1}}}
+\providecommand{\doarXiv}[1]{\href{https://arxiv.org/abs/#1}{\nolinkurl{https://arxiv.org/abs/#1}}}
+
+% type= article
+\bibitem[{T.~D. {Brandt}(2021){Brandt}}]{brandt2021}
+{Brandt}, T.~D. 2021, \bibinfo{title}{{The Hipparcos-Gaia Catalog of
+  Accelerations: Gaia EDR3 Edition},} \apjs, 254, 42,
+  \dodoi{10.3847/1538-4365/abf93c}
+
+% type= article
+\bibitem[{M.~L. {Bryan} {et~al.}(2016){Bryan}, {Knutson}, {Howard}, {Ngo},
+  {Batygin}, {Crepp}, {Fulton}, {Hinkley}, {Isaacson}, {Johnson}, {Marcy}, \&
+  {Wright}}]{bryan2016}
+{Bryan}, M.~L., {Knutson}, H.~A., {Howard}, A.~W., {et~al.} 2016,
+  \bibinfo{title}{{Statistics of Long Period Gas Giant Planets in Known
+  Planetary Systems},} \apj, 821, 89, \dodoi{10.3847/0004-637X/821/2/89}
+
+% type= article
+\bibitem[{J.~I. {Espinoza-Retamal} {et~al.}(2023){Espinoza-Retamal}, {Zhu}, \&
+  {Petrovich}}]{espinoza2023}
+{Espinoza-Retamal}, J.~I., {Zhu}, W., \& {Petrovich}, C. 2023,
+  \bibinfo{title}{{Prospects from TESS and Gaia to Constrain the Flatness of
+  Planetary Systems},} \aj, 166, 231, \dodoi{10.3847/1538-3881/ad00b9}
+
+% type= article
+\bibitem[{E.~J. {Greenfield} \& J.~E. {Owen}(2026){Greenfield} \&
+  {Owen}}]{greenfield2026}
+{Greenfield}, E.~J., \& {Owen}, J.~E. 2026, \bibinfo{title}{{Detecting multiple
+  planets in Gaia data using Bayesian model selection},} arXiv e-prints,
+  arXiv:2610.07149, \dodoi{10.48550/arXiv.2610.07149}
+
+% type= article
+\bibitem[{B. {Holl} {et~al.}(2023){Holl}, {Sozzetti}, {Sahlmann}, {Giacobbe},
+  {S{\'e}gransan}, {Unger}, {Delisle}, {Barbato}, {Lattanzi}, {Morbidelli}, \&
+  {Sosnowska}}]{holl2023}
+{Holl}, B., {Sozzetti}, A., {Sahlmann}, J., {et~al.} 2023,
+  \bibinfo{title}{{Gaia Data Release 3. Astrometric orbit determination with
+  Markov chain Monte Carlo and genetic algorithms: Systems with stellar,
+  sub-stellar, and planetary mass companions},} \aap, 674, A10,
+  \dodoi{10.1051/0004-6361/202244161}
+
+% type= article
+\bibitem[{H.~A. {Knutson} {et~al.}(2014){Knutson}, {Fulton}, {Montet}, {Kao},
+  {Ngo}, {Howard}, {Crepp}, {Hinkley}, {Bakos}, {Batygin}, {Johnson}, {Morton},
+  \& {Muirhead}}]{knutson2014}
+{Knutson}, H.~A., {Fulton}, B.~J., {Montet}, B.~T., {et~al.} 2014,
+  \bibinfo{title}{{Friends of Hot Jupiters. I. A Radial Velocity Search for
+  Massive, Long-period Companions to Close-in Gas Giant Planets},} \apj, 785,
+  126, \dodoi{10.1088/0004-637X/785/2/126}
+
+% type= article
+\bibitem[{C. {Lammers} \& J.~N. {Winn}(2026){Lammers} \& {Winn}}]{lammers2025}
+{Lammers}, C., \& {Winn}, J.~N. 2026, \bibinfo{title}{{On the Exoplanet Yield
+  of Gaia Astrometry},} \aj, 171, 18, \dodoi{10.3847/1538-3881/ae21de}
+
+% type= article
+\bibitem[{L. {Parc} {et~al.}(2026){Parc}, {Faria}, {Bouchy}, {Baron},
+  {Bhatnagar}, {Billot}, {Carteret}, {Chaverot}, {Deline}, {Delisle},
+  {Figueira}, {Fontanet}, {Hara}, {Houelle}, {Marmier}, {Neveu-VanMalle},
+  {Nielsen}, {Rey}, {S{\'e}gransan}, {Stalport}, \& {Udry}}]{parc2026}
+{Parc}, L., {Faria}, J.~P., {Bouchy}, F., {et~al.} 2026,
+  \bibinfo{title}{{Companions of Hot Jupiters: two decades of radial velocity
+  monitoring with CORALIE},} arXiv e-prints, arXiv:2610.25152.
+\newblock \doarXiv{2610.25152}
+
+% type= article
+\bibitem[{J.~A. {Ranshaw} {et~al.}(2026){Ranshaw}, {Wang}, {Burt},
+  {Espinoza-Retamal}, {Radzom}, {Butler}, {Holden}, {Vogt}, \&
+  {Wang}}]{ranshaw2026}
+{Ranshaw}, J.~A., {Wang}, X.-Y., {Burt}, J.~A., {et~al.} 2026,
+  \bibinfo{title}{{The Discovery of K2-232c: Divergent Formation Histories for
+  Hot and Warm Jupiters Based on Outer Companion Eccentricity},} \aj, 172, 254,
+  \dodoi{10.3847/1538-3881/ae9ff1}
+
+% type= article
+\bibitem[{G.-Y. {Xiao} {et~al.}(2026){Xiao}, {Teng}, {Huang}, {Feng}, {Lai},
+  {Dai}, \& {Liu}}]{xiao2026}
+{Xiao}, G.-Y., {Teng}, H.-Y., {Huang}, X., {et~al.} 2026,
+  \bibinfo{title}{{Transiting Planetary Systems with Distant Giant Companions
+  Remain Moderately Coplanar},} \apjl, 1009, L6,
+  \dodoi{10.3847/2041-8213/aea15e}
+
+\end{thebibliography}

@@ -1,0 +1,161 @@
+%% RNAAS draft: pre-registered Gaia DR4 predictions for known outer companions of transiting
+%% giant-planet hosts. Drafted 2026-11-22 for submission before DR4 (2026 Dec 2). Jon submits.
+%% Same template and rules as paper/dr4_companions.tex (aastex701, one figure, "I", AI statement).
+%% Numbers trace to results/known_companion_predictions.csv (scripts/known_companion_predictions.py,
+%% n = 100 draws per companion, seed 7000000) and results/completeness.csv; see % comments.
+%% Bibliography: known_companion_predictions.bib is the ADS BibTeX export (2026-11-24, via the ADS API),
+%% rekeyed by scripts/ads_rekey_bib.py; authors, year, journal and DOI checked against ADS.
+\documentclass{aastex701}
+
+\newcommand{\gaia}{\textit{Gaia}}
+
+\begin{document}
+
+\title{Pre-release Predictions of \gaia\ DR4 Astrometric Signals from Known Outer Companions to
+Transiting Giant Planets}
+
+\author[orcid=0009-0000-7524-4470]{Jon McBee}
+\affiliation{Independent researcher, USA}
+\email{jon.mcbee@gmail.com}
+
+\begin{abstract}
+\gaia\ Data Release 4 (DR4) will publish epoch astrometry for 66 months of observations. Before
+its release, I predict whether DR4 will detect the 37 known long-period ($P>100$\,d, $\geq 1\,M_J$)
+companions of 36 stars hosting transiting giant planets. For each companion I simulate DR4
+along-scan astrometry with the scanning law and noise model, draw the unknown inclination from
+the observed mutual-inclination distribution, and apply orbit and acceleration searches at a
+false-alarm probability of $10^{-4}$. Eleven companions have detection probabilities above 50\%,
+and about 11 detections are expected in total. For periods well beyond the DR4 baseline, the
+naive full-orbit signal-to-noise overpredicts detectability: WASP-68\,c, HAT-P-17\,c and
+HAT-P-2\,c carry expected $\Delta\chi^2$ of 760--3100 yet are detected in only 4--25\% of
+simulations, because the single-star fit absorbs most of a short orbital arc. Known orbital
+phases change several predictions substantially. The predictions are fixed here for comparison
+with DR4.
+\end{abstract}
+
+% UAT concepts: verify IDs at https://astrothesaurus.org before submission
+% (e.g. Astrometric exoplanet detection, Hot Jupiters, Exoplanet systems, Astrometry).
+\keywords{\uat{Astrometric exoplanet detection}{2130} --- \uat{Hot Jupiters}{753} --- \uat{Exoplanet systems}{484}}
+% UAT v6.0.0 preferred terms and IDs, checked 2026-11-24 against astrothesaurus/UAT UAT.json
+
+\section{Introduction}
+Many hot and warm Jupiters have outer giant companions found by radial velocities
+\citep{knutson2014,bryan2016}. Radial velocities give only $M\sin i$, so the mutual inclination
+between the transiting planet and its companion, a key test of high-eccentricity migration, is
+usually unknown. \gaia\ DR4 epoch astrometry can measure the companion's orbital inclination
+and hence its true mass \citep{espinoza2023}. Forecasts so far are either population yields
+\citep{espinoza2023,lammers2025} or signal-to-noise estimates for single systems or surveys
+\citep{ranshaw2026,parc2026}. Here I fix system-by-system predictions for every known outer
+companion of a transiting giant planet, from full simulations of the DR4 data and a calibrated
+detection pipeline, so that DR4 can test them directly.
+
+\section{Sample}
+From the NASA Exoplanet Archive I took every planet orbiting a transiting giant-planet host with
+$P>100$\,d, keeping those with $M\sin i \geq 0.1\,M_J$ (all retained companions have
+$M\sin i \geq 1.1\,M_J$). Orbital elements come from a single published solution per companion.
+% scripts/build_prediction_companions.py -> data/prediction_companions_v2.csv
+For twelve WASP hosts I used the updated CORALIE solutions of \citet{parc2026}, and for WASP-8\,c,
+WASP-53\,c and TOI-2537\,c the true masses of \citet{xiao2026}. The sample has 37 companions on
+36 hosts, ten with true masses and 27 with minimum masses. Ten companions have a published time
+of periastron.
+% results/known_companion_predictions.csv: mass_type counts true 10, msini 27; finite p_any_phase 10
+Two hosts already show a significant Hipparcos--\gaia\ acceleration ($\chi^2>11.8$;
+\citealt{brandt2021}): TOI-201 ($\chi^2=40$) and HD~118203 ($\chi^2=12$). None of the 36 hosts
+has a DR3 non-single-star solution.
+% data/target_prior_astrometry.csv: hgca_chi2 39.76 (TOI-201), 12.26 (HD 118203); NSS columns empty for all 36
+
+\section{Simulation}
+For each companion I drew 100 realisations. Each simulates the DR4 along-scan positions of the
+host at the epochs of the \gaia\ scanning law, with the per-CCD noise model of \citet{holl2023},
+10\% of transits rejected, uniform excess noise of 0--50\,$\mu$as per CCD and per transit, and
+the photocentre orbit of a dark companion added. Minimum masses are converted to true masses by
+drawing the mutual inclination from a Rayleigh distribution of width $16^\circ$
+\citep{xiao2026} about the transiting planet's edge-on orbit. Unpublished eccentricities are
+drawn from $U(0,0.5)$, and unpublished periastron times, arguments of periastron and nodes
+uniformly. For the ten companions with a published periastron time, I repeat the draws with the
+published phase and argument of periastron.
+
+Each simulated star goes through the same pipeline I will run on DR4: a five-parameter
+single-star fit, seven- and nine-parameter acceleration fits and a Keplerian orbit search, all
+with maximum-likelihood excess noise. A detection is an orbit with $\Delta\chi^2>42.6$ or an
+acceleration with $\Delta\chi^2>21.7$ (seven-parameter) or $>27.1$ (nine-parameter), each a
+false-alarm probability of $10^{-4}$ per star from $10^4$ simulated single stars.
+% results/thresholds.csv
+I compare the result with the naive expected full-orbit
+$\Delta\chi^2 = N a_0^2 (1+\cos^2 i)/(4\sigma^2)$, where $a_0$ is the photocentre semimajor
+axis, $N$ the number of CCD observations and $\sigma$ their noise. For $P<5.5$\,yr, injection
+and recovery give 50\% completeness at a naive $\Delta\chi^2 \approx 80$.
+% results/completeness.csv, results/completeness_models.csv
+
+\section{Predictions}
+Figure~\ref{fig:pred} shows the detection probability of each companion. Eleven exceed 50\%:
+WASP-8\,c, TOI-2537\,c, TOI-201\,c, WASP-81\,c, WASP-132\,d, WASP-99\,c, WASP-34\,c, WASP-53\,c,
+HD~118203\,c, Kepler-448\,c (KOI-12\,c) and K2-232\,c. The probabilities sum to 10.8 with
+random phases and 11.3 with the published phases.
+% p_any and p_any_phase columns; sums 10.78 and 11.27
+Twenty-two companions have probabilities of 7\% or less, mostly because their signals are a few
+microarcseconds or their hosts are distant.
+% 22 rows with p_any <= 0.07 in results/known_companion_predictions.csv
+
+For periods below the 5.5\,yr baseline, the simulated probabilities follow the injection
+completeness curve. For longer periods they fall below it. WASP-68\,c ($P=17$\,yr), HAT-P-17\,c
+(15\,yr) and HAT-P-2\,c (23\,yr) have naive $\Delta\chi^2$ of 870, 760 and 3100 but detection
+probabilities of 23\%, 25\% and 25\%, because the five-parameter fit absorbs most of a short,
+nearly uniform arc into proper motion. \citet{parc2026} list WASP-68\,c among the companions
+detectable in DR4; my simulations disagree. Where long-period companions are detected, it is
+mostly through acceleration terms or an orbit fit at the wrong period: the orbit search finds the
+period to within 20\% for none of the companions with $P>6.5$\,yr, with or without the published phase. This agrees with the
+turnover in DR4 sensitivity near 5\,yr found by \citet{greenfield2026}.
+
+Published periastron times matter. With them, HD~118203\,c rises from 71\% to 100\%,
+Kepler-448\,c from 63\% to 97\% and K2-232\,c from 61\% to 86\% (cf.\ 75\% from
+\citealt{ranshaw2026}), while HAT-P-17\,c falls to 8\% and HAT-P-2\,c to 4\%, whose DR4 windows
+cover the slow, nearly linear parts of their orbits.
+
+\section{Tests with DR4}
+These predictions make three tests. First, the eleven high-probability companions should show
+significant accelerations or orbits; a shortfall would point to errors in the noise model or the
+published masses. Second, WASP-68\,c, HAT-P-17\,c and HAT-P-2\,c should mostly go undetected
+despite large naive signals; detections would mean the single-star fit absorbs less of a
+long-period arc than simulated. Third, for the detected minimum-mass companions, the measured
+inclinations give true masses and mutual inclinations, to be compared with the $16^\circ$ width
+assumed here. The input table (results/known\_companion\_predictions.csv), per-draw results and
+code are archived on Zenodo: \dataset[doi:10.5281/zenodo.24506629]{\doi{10.5281/zenodo.24506629}}.
+% Zenodo version DOI of GitHub release dr4-predictions-v1 (commit c44d342, published 2026-11-24);
+% concept DOI 10.5281/zenodo.24506628.
+
+\begin{figure}[ht!]
+\plotone{known_companion_predictions_fig1.pdf}
+\caption{Detection probability in simulated \gaia\ DR4 astrometry for 37 known outer companions
+of transiting giant-planet hosts (circles, colored by period; bars are binomial errors from 100
+draws) against the naive expected full-orbit $\Delta\chi^2$. Grey lines show injection--recovery
+completeness for $P<5.5$\,yr and $5.5<P<8$\,yr. Red arrows show the change when the published
+periastron time is used. The plotting code was written by Anthropic's Claude and checked against
+the data by the author.\label{fig:pred}}
+\end{figure}
+
+\begin{acknowledgments}
+This work used the NASA Exoplanet Archive, operated by Caltech under contract with NASA under the
+Exoplanet Exploration Program, and \gaia\ mission tools from ESA/DPAC.
+Data: \dataset[NASA Exoplanet Archive Planetary Systems]{\doi{10.26133/NEA12}} and
+\dataset[Planetary Systems Composite Parameters]{\doi{10.26133/NEA13}}.
+% NEA12 (ps, orbital elements) and NEA13 (pscomppars, multi-planet list): both queried by
+% scripts/pull_companion_params.py; titles checked on the IPAC DOI pages 2026-11-23.
+\end{acknowledgments}
+
+\facilities{Gaia, Exoplanet Archive}
+\software{numpy, scipy, pandas, matplotlib, astropy, gaiascanlaw}
+
+\section*{AI disclosure statement}
+The author used an AI assistant, Anthropic's Claude (a large language model), under his
+supervision. It wrote and ran the simulation and plotting code
+(\url{https://github.com/coracle-us/gaia-dr4}), drafted the text of this note, and retrieved the
+reference list as a BibTeX export from NASA ADS. The author reviewed the pipeline validation
+(reproduction of ESA's single-star fits, null and injection--recovery calibration), reviewed and
+edited the text, checked the numbers against the saved outputs, and takes full responsibility for
+the content.
+
+\bibliography{known_companion_predictions}{}
+\bibliographystyle{aasjournalv7}
+
+\end{document}

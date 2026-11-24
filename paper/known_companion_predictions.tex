@@ -3,8 +3,8 @@
 %% Same template and rules as paper/dr4_companions.tex (aastex701, one figure, "I", AI statement).
 %% Numbers trace to results/known_companion_predictions.csv (scripts/known_companion_predictions.py,
 %% n = 100 draws per companion, seed 7000000) and results/completeness.csv; see % comments.
-%% Bibliography: known_companion_predictions.bib built 2026-11-23 from arXiv abstract pages;
-%% check each entry against ADS before submission (paper/REFERENCES_TODO.md).
+%% Bibliography: known_companion_predictions.bib is the ADS BibTeX export (2026-11-24, via the ADS API),
+%% rekeyed by scripts/ads_rekey_bib.py; authors, year, journal and DOI checked against ADS.
 \documentclass{aastex701}
 
 \newcommand{\gaia}{\textit{Gaia}}
@@ -35,7 +35,8 @@ with DR4.
 
 % UAT concepts: verify IDs at https://astrothesaurus.org before submission
 % (e.g. Astrometric exoplanet detection, Hot Jupiters, Exoplanet systems, Astrometry).
-\keywords{Astrometric exoplanet detection --- Hot Jupiters --- Exoplanet systems}
+\keywords{\uat{Astrometric exoplanet detection}{2130} --- \uat{Hot Jupiters}{753} --- \uat{Exoplanet systems}{484}}
+% UAT v6.0.0 preferred terms and IDs, checked 2026-11-24 against astrothesaurus/UAT UAT.json
 
 \section{Introduction}
 Many hot and warm Jupiters have outer giant companions found by radial velocities
@@ -122,7 +123,7 @@ assumed here. The input table, per-draw results and code are public at
 \url{https://github.com/coracle-us/gaia-dr4} (results/known\_companion\_predictions.csv).
 
 \begin{figure}[ht!]
-\plotone{known_companion_predictions.pdf}
+\plotone{known_companion_predictions_fig1.pdf}
 \caption{Detection probability in simulated \gaia\ DR4 astrometry for 37 known outer companions
 of transiting giant-planet hosts (circles, colored by period; bars are binomial errors from 100
 draws) against the naive expected full-orbit $\Delta\chi^2$. Grey lines show injection--recovery

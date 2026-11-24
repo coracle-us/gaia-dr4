@@ -1,0 +1,20 @@
+{
+  "title": "Pre-release predictions of Gaia DR4 astrometric signals from known outer companions to transiting giant planets: code and data",
+  "upload_type": "software",
+  "description": "<p>Code, input table and per-draw results behind the pre-registered predictions in the Research Note \"Pre-release Predictions of Gaia DR4 Astrometric Signals from Known Outer Companions to Transiting Giant Planets\" (J. McBee). The predictions were fixed before the Gaia DR4 release on 2 December 2026.</p><p>Key files: results/known_companion_predictions.csv (input table and detection probabilities), scripts/known_companion_predictions.py (simulation), scripts/plot_known_companion_predictions.py and figures/known_companion_predictions_fig1.pdf (figure), paper/known_companion_predictions.tex and .bib (the note), results/completeness.csv (injection-recovery calibration).</p>",
+  "creators": [
+    {
+      "name": "McBee, Jon",
+      "affiliation": "Independent researcher, USA",
+      "orcid": "0009-0000-7524-4470"
+    }
+  ],
+  "keywords": [
+    "Astrometric exoplanet detection",
+    "Hot Jupiters",
+    "Exoplanet systems",
+    "Gaia DR4"
+  ],
+  "license": "MIT",
+  "access_right": "open"
+}

@@ -6,9 +6,9 @@ each entry against its ADS record, or swap in the ADS export with the steps belo
 
 1. Paste this into the ADS search box (ui.adsabs.harvard.edu):
 
-   identifier:("arXiv:1312.2954" OR "arXiv:1601.07595" OR "arXiv:2309.08665" OR "arXiv:2511.04673" OR "arXiv:2609.09077" OR "arXiv:2610.25152" OR "arXiv:2609.01377" OR "arXiv:2206.05439" OR "arXiv:2610.07149")
+   identifier:("arXiv:1312.2954" OR "arXiv:1601.07595" OR "arXiv:2309.08665" OR "arXiv:2511.04673" OR "arXiv:2609.09077" OR "arXiv:2610.25152" OR "arXiv:2609.01377" OR "arXiv:2206.05439" OR "arXiv:2610.07149" OR "arXiv:2105.11662")
 
-   Expect 9 records. If fewer come back, search the missing arXiv ids one at a time.
+   Expect 10 records. If fewer come back, search the missing arXiv ids one at a time.
 2. Select all, Export -> BibTeX, save the file.
 3. python scripts/ads_rekey_bib.py <saved file>
 4. Upload paper/known_companion_predictions.tex, .bib and figures/known_companion_predictions.pdf
@@ -25,6 +25,7 @@ each entry against its ADS record, or swap in the ADS export with the steps belo
 | xiao2026 | 2609.01377 | ApJL, accepted |
 | holl2023 | 2206.05439 | A&A 674, A10 |
 | greenfield2026 | 2610.07149 | preprint |
+| brandt2021 | 2105.11662 | ApJS 254, 42 |
 
 Nothing in this note needs the ESA Gaia archive: the host parameters come from data/targets.csv
 (all 36 hosts complete) and the scanning law from the local gaiascanlaw data.

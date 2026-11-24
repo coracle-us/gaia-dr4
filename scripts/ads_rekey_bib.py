@@ -16,7 +16,7 @@ OUT = ROOT / "paper" / "known_companion_predictions.bib"
 KEYS = {  # arXiv id -> key used in the .tex
     "1312.2954": "knutson2014", "1601.07595": "bryan2016", "2309.08665": "espinoza2023",
     "2511.04673": "lammers2025", "2609.09077": "ranshaw2026", "2610.25152": "parc2026",
-    "2609.01377": "xiao2026", "2206.05439": "holl2023", "2610.07149": "greenfield2026",
+    "2609.01377": "xiao2026", "2206.05439": "holl2023", "2610.07149": "greenfield2026", "2105.11662": "brandt2021",
 }
 
 

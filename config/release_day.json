@@ -43,5 +43,27 @@
       "has_epoch_rvs",
       "fraction_double_lined"
     ]
+  },
+  "autorun": {
+    "_comment": "scripts/dr4_watch.py (unattended release day). window_start_utc: polling starts; DR4 is expected ~11:00 UTC 2 Dec.",
+    "window_start_utc": "2026-12-02T00:00:00Z",
+    "tap_url": "https://gea.esac.esa.int/tap-server/tap/sync",
+    "schema": "gaiadr4",
+    "release_candidates": [
+      "Gaia DR4"
+    ],
+    "probe_source_id": 1457486023639239296,
+    "probe_mstar": 0.644,
+    "probe_period_d": [
+      550,
+      600
+    ],
+    "probe_failures_before_alert": 12,
+    "max_launches": 6,
+    "max_missing_frac": 0.05,
+    "keep_awake_hours": 72,
+    "state_dir": "results/dr4_watch",
+    "out": "results/dr4",
+    "raw_dir": "data/raw/dr4"
   }
 }

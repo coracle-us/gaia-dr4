@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Gaia DR4 release-day watcher: one scripts/dr4_watch.py tick every 10 minutes.
+     Install / remove: scripts/install_dr4_watch.sh [--uninstall]. Paths are for Jon's Mac. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>us.coracle.gaia-dr4-watch</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/mcbee/Documents/GitHub/coracle/gaia-dr4/.venv/bin/python</string>
+    <string>/Users/mcbee/Documents/GitHub/coracle/gaia-dr4/scripts/dr4_watch.py</string>
+  </array>
+  <key>WorkingDirectory</key><string>/Users/mcbee/Documents/GitHub/coracle/gaia-dr4</string>
+  <key>StartInterval</key><integer>600</integer>
+  <key>RunAtLoad</key><true/>
+  <key>AbandonProcessGroup</key><true/>
+  <key>StandardOutPath</key><string>/Users/mcbee/Library/Logs/gaia-dr4-watch.log</string>
+  <key>StandardErrorPath</key><string>/Users/mcbee/Library/Logs/gaia-dr4-watch.log</string>
+</dict>
+</plist>

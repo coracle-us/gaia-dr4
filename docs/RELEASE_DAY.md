@@ -38,6 +38,27 @@ Everything below runs from the repository root in the project venv (`.venv\Scrip
    git tag pre-dr4
    ```
 
+## Unattended mode (Jon's Mac)
+
+The release day runs by itself. On the Mac, the venv python is `.venv/bin/python`, not `.venv/Scripts/python`. The package must be installed with `uv pip install -e .`; without it every script fails with `No module named 'companions'`.
+
+| Piece | What it does |
+|---|---|
+| `scripts/dr4_watch.py` | One tick per call. Polls TAP for the `gaiadr4` schema; checks the configured table names against it; fetches Gaia-4 by DataLink and requires an orbit at P = 550–600 d; launches the main run below and relaunches it (resuming) if it dies or leaves > 5% of hosts without data; then runs the post-run chain (`calibrate_null_real --k 5`, `population_analysis`, `make_table` into `results/dr4/table/`, `dashboard`). Before `autorun.window_start_utc` (2 Dec 00:00 UTC) it only writes a heartbeat. |
+| launchd agent `us.coracle.gaia-dr4-watch` | Runs a tick every 10 min. Install or remove: `scripts/install_dr4_watch.sh [--uninstall]`. |
+| `caffeinate` | Started by the first tick in the window: 72 h, no idle or system sleep on AC power. **The Mac must be awake, plugged in and logged in at 18:00 Central (00:00 UTC) on 1 Dec.** |
+| Claude task `gaia-dr4-release-checkin` | Runs on 2–3 Dec at 06:15, 08:15, 10:15, 13:15, 17:15 and 21:15 Central (DR4 is due ~05:00 Central). Drives a tick; fixes config name or string mismatches (verified names only; committed locally); once the run is done, writes `results/dr4/CHECKIN.md` with candidates and vetting to-dos; reports to the Drive relay folder. It never pushes, changes code or thresholds, or claims detections. |
+
+State: `results/dr4_watch/` (`STATUS.md`, `state.json`, `watch.log`, `release_day.log`, `post.log`, `tap_tables.txt`). Check it any time:
+```bash
+.venv/bin/python scripts/dr4_watch.py --status
+```
+If the stage is `blocked` (the Gaia-4 check failed, columns differ, the probe only worked with another release string, or tracked files are modified), fix the cause, commit, then run:
+```bash
+.venv/bin/python scripts/dr4_watch.py --clear
+```
+The automatic run is the first pass. The checks in the next section and the vetting below still apply before anything is claimed.
+
 ## Release day: first hour (verify before bulk downloads)
 
 Check the following on the DR4 archive pages and the DR4 documentation, then edit `config/release_day.json`:
